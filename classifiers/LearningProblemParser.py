@@ -5,13 +5,10 @@ from rdflib import Graph
 # Also provides functions to handle LearningProblemParser.lp.
 class LearningProblemParser:
 
-    def __init__(self,lpNum=None):
-
-        if lpNum is None:
-            raise NameError('Pls choose a learning problem as argument lpNum=<Integer>.')
+    def __init__(self,lpNum):
 
         G = Graph()
-        G.parse(source='data/kg-mini-project-train.ttl', format='turtle')
+        G.parse(source='data/kg-mini-project-train.ttl',format='turtle')
 
         myQuery = '''
         PREFIX lpres: <https://lpbenchgen.org/resource/>
@@ -66,6 +63,7 @@ class LearningProblemParser:
         for row in ResultTripples:
             G.add(row)
         return G
+
 
 
 
