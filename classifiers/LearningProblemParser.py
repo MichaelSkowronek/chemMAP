@@ -4,31 +4,37 @@ import pandas as pd
 
 # Takes the number of the learning problem lpNum in data/kg-mini-project-train.ttl and provides the ontology as RDFLib
 # graph in LearningProblemParser.lp.
-# Note: The ontology LearningProblemParser.lp is the complete ontology with descriptions of all entities.
 # Also provides functions to handle LearningProblemParser.lp.
 class LearningProblemParser:
 
-    def __init__(self,lpNum):
+    def __init__(self,lpNum,source='data/kg-mini-project-train.ttl', rdf_format='turtle'):
 
         G = Graph()
-        G.parse(source='data/kg-mini-project-train.ttl',format='turtle')
+        G.parse(source, format=rdf_format)
 
         myQuery = '''
         PREFIX lpres: <https://lpbenchgen.org/resource/>
+        PREFIX lpprop: <https://lpbenchgen.org/property/>
         CONSTRUCT { lpres:lp_%d ?p ?o }
         WHERE
         {
-            lpres:lp_%d ?p ?o .
+            {
+                BIND (lpprop:excludesResource AS ?p) .
+                lpres:lp_%d lpprop:excludesResource ?o .
+            }
+            UNION
+            {
+                BIND (lpprop:includesResource AS ?p) .
+                lpres:lp_%d lpprop:includesResource ?o .            
+            }
         }
-        ''' % (lpNum, lpNum)
+        ''' % (lpNum, lpNum, lpNum)
         res = G.query(myQuery)
 
         self.lp = self._triplesToGraph(res)
 
     # Get subgraph of lp with objects of properts "excludesResource" in Turtle format.
-    def getExcludesResource(self,lp=None):
-        if lp is None:
-            lp = self.lp
+    def getExcludesResource(self):
 
         myQuery = '''
                 PREFIX lpres: <https://lpbenchgen.org/resource/>
@@ -39,12 +45,10 @@ class LearningProblemParser:
                     ?s lpprop:excludesResource ?o .
                 }
                 '''
-        return self._triplesToGraph(lp.query(myQuery))
+        return self._triplesToGraph(self.lp.query(myQuery))
 
     # Get subgraph of lp with objects of properts "includesResource" in Turtle format.
-    def getIncludesResource(self, lp=None):
-        if lp is None:
-            lp = self.lp
+    def getIncludesResource(self):
 
         myQuery = '''
                     PREFIX lpres: <https://lpbenchgen.org/resource/>
@@ -55,7 +59,7 @@ class LearningProblemParser:
                         ?s lpprop:includesResource ?o .
                     }
                     '''
-        return self._triplesToGraph(lp.query(myQuery))
+        return self._triplesToGraph(self.lp.query(myQuery))
 
 
     # Get X,y arrays where x_i is the ith IRI and y_i is the ith label of the chosen Learning Problem.
@@ -81,5 +85,3 @@ class LearningProblemParser:
         for row in ResultTripples:
             G.add(row)
         return G
-
-

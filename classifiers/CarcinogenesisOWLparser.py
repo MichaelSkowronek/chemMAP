@@ -5,10 +5,10 @@ from rdflib.util import guess_format
 # CarcinogenesisOWLparser.onto.
 class CarcinogenesisOWLparser:
 
-    def __init__(self):
+    def __init__(self, source='data/carcinogenesis/carcinogenesis.owl', rdf_format='xml'):
 
         G = Graph()
-        G.parse(source='data/carcinogenesis/carcinogenesis.owl',format='xml')
+        G.parse(source, rdf_format)
 
         myQuery = '''
         CONSTRUCT { ?s ?p ?o}
@@ -30,4 +30,3 @@ class CarcinogenesisOWLparser:
         for row in ResultTripples:
             G.add(row)
         return G
-
