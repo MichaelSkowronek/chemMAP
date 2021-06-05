@@ -71,4 +71,24 @@ class MergeLpIntoCarcinoOnto:
             print('We have multiple Compound instances per Structure instance in the Carcinogenesis Ontology.')
         return not bool(self.merged_graph.query(my_query))
 
+    # Asserts whether we have only two Atom instances per Bond instance.
+    # This was just an assertion I was interested in.
+    # Note: We definitely have multiple Bond instances per Atom instance.
+    # Note: The answer is True.
+    # Note: It seems that a Atom instance is just a placeholder for assigning Atom types to the two ends of a Bond.
+    def two_atoms_per_bond(self):
+        my_query ='''
+        PREFIX cg: <http://dl-learner.org/carcinogenesis#>
+        ASK {
+               ?bond cg:inBond ?atom1 .
+               ?bond cg:inBond ?atom2 .
+               ?bond cg:inBond ?atom3 .
+               FILTER( ?atom1 != ?atom2 && ?atom1 != ?atom3 && ?atom2 != ?atom3 ) .
+        }
+        '''
+        if not bool(self.merged_graph.query(my_query)):
+            print('We have only two Atom instances per Bond instance.')
+        else:
+            print('We have Bond instances with more than two Atom instances.')
+        return not bool(self.merged_graph.query(my_query))
 
