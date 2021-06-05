@@ -1,5 +1,5 @@
 from rdflib import Namespace
-from rdflib import Literal
+from rdflib import URIRef
 from CarcinogenesisOWLparser import CarcinogenesisOWLparser
 from LearningProblemParser import LearningProblemParser
 
@@ -23,25 +23,31 @@ class MergeLpIntoCarcinoOnto:
         # Define some namespaces
         lpprop = Namespace('https://lpbenchgen.org/property/')
         lpres = Namespace('https://lpbenchgen.org/resource/')
+        lpclass = Namespace('https://lpbenchgen.org/class/')
         owl = Namespace('http://www.w3.org/2002/07/owl#')
         rdf = Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
         rdfs = Namespace('http://www.w3.org/2000/01/rdf-schema#')
         cg = Namespace('http://dl-learner.org/carcinogenesis#')
         xsd = Namespace('http://www.w3.org/2001/XMLSchema#')
 
-        # Define the "inLearningProblem" property with domain and range
-        self.merged_graph.add((lpprop.inLearningProblem, rdf.type, owl.DatatypeProperty))
-        # Note: Somehow the domain individuals in Learning Problems is not "compound.Class" but some arbitrary of the
-        # classes. So we choose owl.Thing as domain.
-        self.merged_graph.add((lpprop.inLearningProblem, rdfs.domain, owl.Thing))
-        self.merged_graph.add((lpprop.inLearningProblem, rdfs.range, xsd.boolean))
+        # Define the "includedIn" and "excludedFrom" property with domain and range and also the LearningProblem class.
+        self.merged_graph.add((lpclass.LearningProblem, rdf.type, owl.Class))
+        lp_uri = URIRef('https://lpbenchgen.org/resource/lp_%d' % lpNum)
+        self.merged_graph.add((lp_uri, rdf.type, lpclass.LearningProblem))
+        self.merged_graph.add((lpprop.includedIn, rdf.type, owl.ObjectProperty))
+        self.merged_graph.add((lpprop.excludedFrom, rdf.type, owl.ObjectProperty))
+        self.merged_graph.add((lpprop.includedIn, rdfs.domain, owl.Thing))
+        self.merged_graph.add((lpprop.includedIn, rdfs.range, lpclass.LearningProblem))
+        self.merged_graph.add((lpprop.excludedFrom, rdfs.domain, owl.Thing))
+        self.merged_graph.add((lpprop.excludedFrom, rdfs.range, lpclass.LearningProblem))
 
-        # Add triples (Compound, inLearningProblem, True) if the LearningProblem includesResource and false if it
-        # exludesResource.
+
+        # Add triples which provide the information if an individual is included or excluded from the Learning
+        # Problem.
         for triple in LPP.getIncludesResource():
-            self.merged_graph.add((triple[2], lpprop.inLearningProblem, Literal(True)))
+            self.merged_graph.add((triple[2], lpprop.includedIn, lp_uri))
         for triple in LPP.getExcludesResource():
-            self.merged_graph.add((triple[2], lpprop.inLearningProblem, Literal(False)))
+            self.merged_graph.add((triple[2], lpprop.excludedFrom, lp_uri))
 
     # Generate a turtle representation in "data/output.ttl".
     def serialize(self, destination='data/output.ttl', rdf_format='turtle'):
