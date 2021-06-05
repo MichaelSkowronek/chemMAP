@@ -47,6 +47,28 @@ class MergeLpIntoCarcinoOnto:
     def serialize(self, destination='data/output.ttl', rdf_format='turtle'):
         self.merged_graph.serialize(destination=destination, format=rdf_format)
 
+    #------------------------------------------------------------------------------------------------------------------%
+    # Some inference functions on merged ontology.
 
+    # Asserts whether we have one Compound instance per Structure instance in the Carcinogenesis Ontology or not.
+    # This was just an assertion I was interested in.
+    # Note: We definitely have multiple Structure instances per Compound instance.
+    # Note: The answer is True.
+    # Note: It seems that a Structure instance is just a placeholder for assigning a Compound instance to be of type
+    # of one of the Structure subclasses.
+    def one_compound_per_struct(self):
+        my_query ='''
+        PREFIX cg: <http://dl-learner.org/carcinogenesis#>
+        ASK {
+               ?compound1 cg:hasStructure ?structure .
+               ?compound2 cg:hasStructure ?structure .
+               FILTER( ?compound1 != ?compound2 ) .
+        }
+        '''
+        if not bool(self.merged_graph.query(my_query)):
+            print('We have only one Compound instance per Structure instance in the Carcinogenesis Ontology.')
+        else:
+            print('We have multiple Compound instances per Structure instance in the Carcinogenesis Ontology.')
+        return not bool(self.merged_graph.query(my_query))
 
 
