@@ -98,3 +98,39 @@ class MergeLpIntoCarcinoOnto:
             print('We have Bond instances with more than two Atom instances.')
         return not bool(self.merged_graph.query(my_query))
 
+    # Gets the classes from the top of the class hierarchy which have an individual which is in- or excluded in the
+    # Learning Problem.
+    def get_classes_with_classifiication(self):
+        my_query = '''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX lpprop: <https://lpbenchgen.org/property/>
+        SELECT DISTINCT ?class
+        WHERE {
+            {
+                ?individual lpprop:excludedFrom ?o .
+                ?individual rdf:type ?class .
+                FILTER NOT EXISTS { ?class rdfs:subClassOf ?superclass } .
+            }
+            UNION
+            {
+                ?individual lpprop:excludedFrom ?o .
+                ?individual rdf:type ?subclass .
+                ?subclass rdfs:subClassOf ?class
+                FILTER NOT EXISTS { ?class rdfs:subClassOf ?superclass } .
+            }
+            UNION
+            {
+                ?individual lpprop:excludedFrom ?o .
+                ?individual rdf:type ?subsubclass .
+                ?subsubclass rdfs:subClassOf ?subclass .
+                ?subclass rdfs:subClassOf ?class .
+                FILTER NOT EXISTS { ?class rdfs:subClassOf ?superclass } .
+            }
+        }
+        '''
+        result = self.merged_graph.query(my_query)
+        for cl in result:
+            print(cl)
+        return result
+
