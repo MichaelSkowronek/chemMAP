@@ -8,25 +8,4 @@ class CarcinogenesisOWLparser:
     def __init__(self, source='data/carcinogenesis/carcinogenesis.owl', rdf_format='xml'):
 
         G = Graph()
-        G.parse(source, rdf_format)
-
-        myQuery = '''
-        CONSTRUCT { ?s ?p ?o}
-        WHERE {
-            ?s ?p ?o
-        }
-        '''
-        res = G.query(myQuery)
-
-        self.onto = self._triplesToGraph(res)
-
-
-#--------------------------------------------------------------------------------------------------------------------#
-# Helper Functions
-
-    # Converts a queryResult from rdflib.graph.Graph.query() which consists of triples to a Graph() object
-    def _triplesToGraph(self,ResultTripples):
-        G = Graph()
-        for row in ResultTripples:
-            G.add(row)
-        return G
+        self.onto = G.parse(source, rdf_format)
