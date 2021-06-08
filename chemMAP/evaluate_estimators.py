@@ -30,13 +30,15 @@ if __name__ == "__main__":
 
     log("starting evaluation")
     mean_results = {}
-    for estimator_cls in estimator_list:
+    for i, estimator_cls in enumerate(estimator_list):
         class_name = str(estimator_cls).split("'")[1].split(".")[-1]
-        log(f"evaluating {class_name}")
+        log(f"evaluating {class_name}, {i+1}/{len(estimator_list)}")
         estimator_results = {}
-        for lp in learning_problems:
+        for i, lp in enumerate(learning_problems):
+            log(f"learning problem {lp["name"]}, {i+1}/{len(learning_problems)}")
             estimator = estimator_cls(ontology)
             lp_result = carcino_CV_score(estimator, lp["examples"], lp["labels"])
+            pprint(lp_result)
             estimator_results[lp["name"]] = lp_result
         
         mean_result = {}
