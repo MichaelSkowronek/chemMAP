@@ -32,5 +32,9 @@ class NaiveClassEstimator(GenericEstimator):
         predictions = []
         for example in examples:
             example_class = self._get_class(example)
-            predictions.append(self.class_prediction[example_class])
+            if example_class in self.class_prediction:
+                predictions.append(self.class_prediction[example_class])
+            else:
+                # we have never seen this class in training, assume excluded
+                predictions.append(False)
         return predictions
