@@ -2,6 +2,7 @@
 /.idea/
 /__pycache__/
 /chemMAP/__pycache__/
+/estimators/__pycache__/
 /chemMAP.egg-info/
 /data/kg-mini-project-train.pcl
 /data/carcinogenesis/carcinogenesis.pcl
