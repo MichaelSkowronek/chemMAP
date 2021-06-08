@@ -1,0 +1,1 @@
+"""Knowledge Graphs lecture mini project."""
