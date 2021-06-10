@@ -125,7 +125,7 @@ def get_learning_problems(source="data/kg-mini-project-train.ttl"):
         SELECT DISTINCT ?a
         WHERE
         {
-        ?problem lpprop:includesResource  ?a .
+        ?problem lpprop:excludesResource  ?a .
         }""", initBindings={'problem': lp})
         neg_examples = list(map(lambda x: x[0], neg_examples_query))
         examples.extend(neg_examples)
