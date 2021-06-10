@@ -1,4 +1,6 @@
 import rdflib
+import numpy as np
+import pandas as pd
 
 
 # Filter X by compounds
@@ -27,7 +29,7 @@ class AtomFeatures:
 
     def transform(self, X):
 
-        # TODO: Just query for each x in X all the atoms and then add a 1 to the matrix
+        # TODO: Store the atoms in file like Alex did
 
 
         # First get all the atoms there are.
@@ -43,25 +45,26 @@ class AtomFeatures:
         # Get the IRIs to provide labels later.
         atom_labels = []
         for atom in atoms:
-            atom_labels.append(atom[0])
+            # Get the name after #
+            atom_labels.append(atom[0].n3().split('#')[1].split('>')[0])
         atom_labels = np.array(atom_labels)
 
         # Check for each example if it has an atom of the atoms or not.
         hasAtom = pd.DataFrame(data=np.zeros((len(X),len(atoms)), dtype=int), columns=atom_labels)
         for i, x in enumerate(X):
-            for j, atom in enumerate(atoms):
-                hasAtom.iloc[i][j] = bool(self.ontology.query('''
-                PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-                ASK {
-                    ?compound carcinogenesis:hasAtom ?atom_instance .
-                    ?atom_instance a ?sub_atom .
-                    ?sub_atom rdfs:subClassOf ?atom .
-                }
-                ''', initBindings={'compound': rdflib.URIRef(x), 'atom': rdflib.URIRef(atom[0])})
-                      )
+            hasAtoms = self.ontology.query('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?atom
+            WHERE {
+                ?compound carcinogenesis:hasAtom ?atom_instance .
+                ?atom_instance a ?subclass .
+                ?subclass rdfs:subClassOf ?atom .
+            }
+            ''', initBindings={'compound': rdflib.URIRef(x)}
+            )
+            for atom in hasAtoms:
+                hasAtom.loc[i, atom[0].n3().split('#')[1].split('>')[0]] = 1
         return hasAtom
-
-
 
     def fit_transform(self, X):
         return self.transform(X)
@@ -74,8 +77,7 @@ class AtomFeatures:
 
 # from chemMAP.CarcinogenesisOWLparser import load_ontology
 # from chemMAP.LearningProblemParser import get_learning_problems
-# import numpy as np
-# import pandas as pd
+#
 #
 # Carcino = load_ontology()
 # AF = AtomFeatures(Carcino)
@@ -87,7 +89,7 @@ class AtomFeatures:
 # y = np.array(lps[lp_num]["labels"])
 #
 # hasAtom = AF.transform(np.array(X_compounds))
-# print(hasAtom.iloc[:, 0])
+# print(hasAtom)
 # X_compounds_df = pd.DataFrame(data=X_compounds, columns=['Compound'])
 # print(pd.concat((X_compounds_df, hasAtom), axis=1))
 
