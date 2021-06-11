@@ -92,23 +92,23 @@ class AtomFeatures:
 #---------------------------------------------------------------------------------------------------------------------#
 # For testing
 
-from chemMAP.CarcinogenesisOWLparser import load_ontology
-from chemMAP.LearningProblemParser import get_learning_problems
-
-
-Carcino = load_ontology()
-AF = AtomFeatures(Carcino)
-lps = get_learning_problems()
-lp_num = 8
-print(lps[lp_num]["name"])
-X = np.array(lps[lp_num]["examples"])
-X_compounds = get_compounds(Carcino, X)
-y = np.array(lps[lp_num]["labels"])
-
-# hasAtom = AF.transform(np.array(X_compounds))
-# print(hasAtom)
-# X_compounds_df = pd.DataFrame(data=X_compounds, columns=['Compound'])
-# print(pd.concat((X_compounds_df, hasAtom), axis=1))
+# from chemMAP.CarcinogenesisOWLparser import load_ontology
+# from chemMAP.LearningProblemParser import get_learning_problems
+#
+#
+# Carcino = load_ontology()
+# AF = AtomFeatures(Carcino)
+# lps = get_learning_problems()
+# lp_num = 8
+# print(lps[lp_num]["name"])
+# X = np.array(lps[lp_num]["examples"])
+# X_compounds = get_compounds(Carcino, X)
+# y = np.array(lps[lp_num]["labels"])
+#
+# # hasAtom = AF.transform(np.array(X_compounds))
+# # print(hasAtom)
+# # X_compounds_df = pd.DataFrame(data=X_compounds, columns=['Compound'])
+# # print(pd.concat((X_compounds_df, hasAtom), axis=1))
 
 
 
