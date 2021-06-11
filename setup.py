@@ -9,7 +9,8 @@ setuptools.setup(
         "rdflib",
         "requests",
         "pandas",
-        "scikit-learn"
+        "scikit-learn",
+        "numpy"
     ],
     python_requires=">=3.7",
 )
