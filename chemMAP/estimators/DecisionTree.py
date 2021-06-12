@@ -1,6 +1,7 @@
 from chemMAP.estimators.GenericEstimator import GenericEstimator
 from sklearn.tree import DecisionTreeClassifier
 from chemMAP.transformers.CompoundFeatures import AtomFeatures
+import numpy as np
 
 
 class DecisionTreeOnAtoms(GenericEstimator):
@@ -12,10 +13,10 @@ class DecisionTreeOnAtoms(GenericEstimator):
 
     def fit(self, X, y):
         X_has_atoms = self.transformer.transform(X)
-        DecisionTreeOnAtoms.fit(X_has_atoms, y)
+        self.tree.fit(X_has_atoms, y)
 
     def predict(self, X):
         X_has_atoms = self.transformer.transform(X)
-        y_pred = DecisionTreeOnAtoms.predict(X_has_atoms)
+        y_pred = self.tree.predict(X_has_atoms)
         return y_pred
 
