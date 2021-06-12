@@ -1,8 +1,6 @@
 /venv/
 /.idea/
 **/__pycache__/
-/chemMAP/transformers/pcl_files/
+**.pcl
 /chemMAP.egg-info/
-/data/kg-mini-project-train.pcl
-/data/carcinogenesis/carcinogenesis.pcl
 /results
