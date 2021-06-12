@@ -8,6 +8,8 @@ import pickle
 # Filter X, y  by compounds.
 # X: IRIs as pandas.DataFrame of str, y: label of the corresponding IRI as pandas.DataFrame.
 def get_compounds(ontology, X, y):
+    X = pd.DataFrame(X)
+    y = pd.DataFrame(y)
     compounds = []
     labels = []
     for tuple in pd.concat((X, y), axis=1).itertuples():
@@ -23,7 +25,7 @@ def get_compounds(ontology, X, y):
         if is_compound:
             compounds.append(x)
             labels.append(y)
-    return pd.DataFrame(data={'Compound': compounds}), pd.DataFrame(data={'Labels': labels})
+    return compounds, labels
 
 
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
@@ -40,21 +42,22 @@ class AtomFeatures:
     # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
     # X: pd.DataFrame of str which describe compound IRIs
     def transform(self, X):
+        X = pd.DataFrame(X)
 
         # First get all the atoms there are and the corresponding labels.
         atoms, atom_labels = self._get_atoms(self.ontology)
         atom_labels = np.array(atom_labels)
 
         # Get the index for all compounds.
-        index = []
-        for x in X.itertuples():
-            index.append(x[1].n3().split('#')[1].split('>')[0])
+        # index = []
+        # for x in X.itertuples():
+        #     index.append(x[1].n3().split('#')[1].split('>')[0])
 
         # Check for each example if it has an atom of the atoms or not.
-        hasAtom = pd.DataFrame(data=np.zeros((len(X),len(atoms)), dtype=int), columns=atom_labels, index=index)
+        hasAtom = pd.DataFrame(data=np.zeros((len(X),len(atoms)), dtype=int), columns=atom_labels)
         for tuple in X.itertuples():
+            i = tuple[0]
             x = tuple[1]
-            x_index = tuple[1].n3().split('#')[1].split('>')[0]
             comp_atoms = self.ontology.query('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
             SELECT DISTINCT ?atom
@@ -67,7 +70,7 @@ class AtomFeatures:
             )
             for atom in comp_atoms:
                 atom_column = atom[0].n3().split('#')[1].split('>')[0]
-                hasAtom.loc[x_index, atom_column] = 1
+                hasAtom.loc[i, atom_column] = 1
         return hasAtom
 
     # Without fit this is trivial.
@@ -104,28 +107,6 @@ class AtomFeatures:
         return atoms, atom_labels
 
 
-
-
-
-
-#---------------------------------------------------------------------------------------------------------------------#
-# For testing
-
-# from chemMAP.CarcinogenesisOWLparser import load_ontology
-# from chemMAP.LearningProblemParser import get_learning_problems
-#
-#
-# Carcino = load_ontology()
-# lps = get_learning_problems()
-# lp_num = 8
-# print(lps[lp_num]["name"])
-# X = pd.DataFrame(data={'examples': lps[lp_num]["examples"]})
-# y = pd.DataFrame(data={'labels': lps[lp_num]["labels"]})
-# X_comp, y_comp = get_compounds(Carcino, X, y)
-#
-# AF = AtomFeatures(Carcino)
-# X_trans = AF.transform(X_comp)
-# print(X_trans)
 
 
 
