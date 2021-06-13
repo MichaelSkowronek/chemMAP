@@ -215,7 +215,8 @@ class SubAtomFeatures:
     def fit_transform(self, X):
         return self.transform(X)
 
-# Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+# Transforms X into 93 features, one for each atom and sub-atom. A feature is 1 if x_i in X has this atom and 0
+# otherwise.
 class AllAtomFeatures:
 
     def __init__(self, ontology):
@@ -225,7 +226,7 @@ class AllAtomFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+    # Transforms X into 93 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
