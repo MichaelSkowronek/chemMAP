@@ -31,7 +31,7 @@ def get_compounds(ontology, X, y):
 # Gets all the Atoms in the Carcinogenesis Ontology.
 # ontology: Graph
 # return: atoms: list of URIRef, atom_labels: list of strings
-def get_atoms(self, ontology):
+def get_atoms(ontology):
     pickled_file = "chemMAP/transformers/pcl_files/Atoms.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -55,10 +55,10 @@ def get_atoms(self, ontology):
     return atoms, atom_labels
 
 
-# Gets all the Atoms in the Carcinogenesis Ontology.
+# Gets all the Subclasses of Atoms in the Carcinogenesis Ontology.
 # ontology: Graph
-# return: atoms: list of URIRef, atom_labels: list of strings
-def get_sub_atoms(self, ontology):
+# return: sub_atoms: list of URIRef, sub_atom_labels: list of strings
+def get_sub_atoms(ontology):
     pickled_file = "chemMAP/transformers/pcl_files/SubAtoms.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -69,7 +69,7 @@ def get_sub_atoms(self, ontology):
     for atom in atoms:
         query = """
                 PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-                SELECT ?atom
+                SELECT ?sub_atom
                 WHERE {
                     ?sub_atom rdfs:subClassOf ?atom .
                 }
@@ -84,7 +84,6 @@ def get_sub_atoms(self, ontology):
 
 
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
-# X: np.array of str which describe compound IRIs
 class AtomFeatures:
 
     def __init__(self, ontology):
@@ -95,12 +94,13 @@ class AtomFeatures:
         return self
 
     # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
-    # X: pd.DataFrame of str which describe compound IRIs
+    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
+    # returns a pd.DataFrame
     def transform(self, X):
         X = pd.DataFrame(X)
 
         # First get all the atoms there are and the corresponding labels.
-        atoms, atom_labels = self.get_atoms(self.ontology)
+        atoms, atom_labels = get_atoms(self.ontology)
         atom_labels = np.array(atom_labels)
 
         # Get the index for all compounds.
@@ -109,10 +109,10 @@ class AtomFeatures:
         #     index.append(x[1].n3().split('#')[1].split('>')[0])
 
         # Check for each example if it has an atom of the atoms or not.
-        hasAtom = pd.DataFrame(data=np.zeros((len(X),len(atoms)), dtype=int), columns=atom_labels)
-        for tuple in X.itertuples():
-            i = tuple[0]
-            x = tuple[1]
+        hasAtom = pd.DataFrame(data=np.zeros((len(X), len(atoms)), dtype=int), columns=atom_labels)
+        for row in X.itertuples():
+            i = row[0]
+            x = row[1]
             comp_atoms = self.ontology.query('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
             SELECT DISTINCT ?atom
@@ -133,10 +133,8 @@ class AtomFeatures:
         return self.transform(X)
 
 
-
-
-# Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
-# X: np.array of str which describe compound IRIs
+# Transforms X into 66 features, one for each subclass of an atom. A feature is 1 if x_i in X has this sub-atom and 0
+# otherwise.
 class SubAtomFeatures:
 
     def __init__(self, ontology):
@@ -146,13 +144,15 @@ class SubAtomFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
-    # X: pd.DataFrame of str which describe compound IRIs
+    # Transforms X into 66 features, one for each subclass of an atom. A feature is 1 if x_i in X has this sub-atom and
+    # 0 otherwise.
+    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
+    # returns a pd.DataFrame
     def transform(self, X):
         X = pd.DataFrame(X)
 
-        # First get all the atoms there are and the corresponding labels.
-        atoms, atom_labels = self._get_subatoms(self.ontology)
+        # First get all the sub-atoms there are and the corresponding labels.
+        atoms, atom_labels = get_sub_atoms(self.ontology)
         atom_labels = np.array(atom_labels)
 
         # Get the index for all compounds.
@@ -160,23 +160,22 @@ class SubAtomFeatures:
         # for x in X.itertuples():
         #     index.append(x[1].n3().split('#')[1].split('>')[0])
 
-        # Check for each example if it has an atom of the atoms or not.
-        hasAtom = pd.DataFrame(data=np.zeros((len(X),len(atoms)), dtype=int), columns=atom_labels)
-        for tuple in X.itertuples():
-            i = tuple[0]
-            x = tuple[1]
+        # Check for each example if it has an sub-atom or not.
+        hasAtom = pd.DataFrame(data=np.zeros((len(X), len(atoms)), dtype=int), columns=atom_labels)
+        for row in X.itertuples():
+            i = row[0]
+            x = row[1]
             comp_atoms = self.ontology.query('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?atom
+            SELECT DISTINCT ?sub_atom
             WHERE {
                 ?compound carcinogenesis:hasAtom ?atom_instance .
-                ?atom_instance a ?subclass .
-                ?subclass rdfs:subClassOf ?atom .
+                ?atom_instance a ?sub_atom .
             }
             ''', initBindings={'compound': rdflib.URIRef(x)}
             )
-            for atom in comp_atoms:
-                atom_column = atom[0].n3().split('#')[1].split('>')[0]
+            for sub_atom in comp_atoms:
+                atom_column = sub_atom[0].n3().split('#')[1].split('>')[0]
                 hasAtom.loc[i, atom_column] = 1
         return hasAtom
 
