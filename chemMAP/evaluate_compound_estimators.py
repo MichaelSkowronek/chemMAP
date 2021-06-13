@@ -48,9 +48,12 @@ if __name__ == "__main__":
             ones = sum(y)
             zeros = sum((np.array(y) - 1) ** 2)
             log("Filtering finished. Number of compounds = {} with {} 1s and {} 0s.".format(len(X), ones, zeros))
+            log("Starting cross-validation...")
             lp_result = carcino_CV_score(estimator, X, y)
             pprint(lp_result)
+            log("Finished cross-validation.")
             estimator_results[lp_name] = lp_result
+            log("\n\n")
         
         mean_result = {}
         measure_count = {}
