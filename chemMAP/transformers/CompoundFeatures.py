@@ -112,6 +112,7 @@ def get_dict_sub_atom_to_atom(ontology):
 
 
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+# NOTE: These are only the super-classes of atoms. A transformer for all atom classes exists also.
 class AtomFeatures:
 
     def __init__(self, ontology):
@@ -156,8 +157,7 @@ class AtomFeatures:
             for sub_atom in comp_sub_atoms:
                 sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
                 atom_label = dict_sa_to_a[sub_atom_label]
-                atom_column = atom_label
-                hasAtom.loc[i, atom_column] = 1
+                hasAtom.loc[i, atom_label] = 1
         return hasAtom
 
     # Without fit this is trivial.
@@ -215,6 +215,64 @@ class SubAtomFeatures:
     def fit_transform(self, X):
         return self.transform(X)
 
+# Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+class AllAtomFeatures:
 
+    def __init__(self, ontology):
+        self.ontology = ontology
+
+    # No fit needed.
+    def fit(self):
+        return self
+
+    # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
+    # returns a pd.DataFrame
+    def transform(self, X):
+        X = pd.DataFrame(X)
+
+        # First get all the atoms there are and the corresponding labels.
+        atoms, atom_labels = get_atoms(self.ontology)
+        atom_labels = np.array(atom_labels)
+        sub_atoms, sub_atom_labels = get_sub_atoms(self.ontology)
+        sub_atom_labels = np.array(sub_atom_labels)
+
+        # For speedup we also need a hashtable from sub-atoms to atoms
+        dict_sa_to_a = get_dict_sub_atom_to_atom(self.ontology)
+
+        # Get the index for all compounds.
+        # index = []
+        # for x in X.itertuples():
+        #     index.append(x[1].n3().split('#')[1].split('>')[0])
+
+        # Check for each example if it has an atom of the atoms or not.
+        hasAtom = pd.DataFrame(data=np.zeros((len(X), len(atoms)), dtype=int), columns=atom_labels)
+        hasSubAtom = pd.DataFrame(data=np.zeros((len(X), len(sub_atoms)), dtype=int), columns=sub_atom_labels)
+        featureMatrix = pd.concat((hasAtom, hasSubAtom), axis=1)
+        for row in X.itertuples():
+            i = row[0]
+            x = row[1]
+            comp_sub_atoms = self.ontology.query('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?sub_atom
+            WHERE {
+                ?compound carcinogenesis:hasAtom ?atom_instance .
+                ?atom_instance a ?sub_atom .
+            }
+            ''', initBindings={'compound': rdflib.URIRef(x)}
+            )
+            for sub_atom in comp_sub_atoms:
+                # Set 1 for the sub_atom
+                sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
+                featureMatrix.loc[i, sub_atom_label] = 1
+
+                # Set 1 for the atom
+                atom_label = dict_sa_to_a[sub_atom_label]
+                featureMatrix.loc[i, atom_label] = 1
+        return featureMatrix
+
+    # Without fit this is trivial.
+    def fit_transform(self, X):
+        return self.transform(X)
 
 
