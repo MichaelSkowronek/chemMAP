@@ -83,6 +83,34 @@ def get_sub_atoms(ontology):
     return sub_atoms, sub_atom_labels
 
 
+# Calculates a hashtable(dict) which maps sub-atoms to atoms.
+# The hashtable keys are the str name of the sub-atom.
+# The hashtable values are the str name of the corresponding atom.
+def get_dict_sub_atom_to_atom(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/DictSaToA.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    atoms, atom_labels = get_atoms(ontology)
+    dict_sa_to_a = {}
+    for atom, atom_label in zip(atoms, atom_labels):
+        query = """
+                    PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+                    SELECT ?sub_atom
+                    WHERE {
+                        ?sub_atom rdfs:subClassOf ?atom .
+                    }
+                    """
+        results = ontology.query(query, initBindings={'atom': atom})
+        for result in results:
+            result_label = result[0].n3().split('#')[1].split('>')[0]
+            dict_sa_to_a[result_label] = atom_label
+
+    pickle.dump(dict_sa_to_a, open(pickled_file, "wb"))
+    return dict_sa_to_a
+
+
+
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
 class AtomFeatures:
 
@@ -103,6 +131,9 @@ class AtomFeatures:
         atoms, atom_labels = get_atoms(self.ontology)
         atom_labels = np.array(atom_labels)
 
+        # For speedup we also need a hashtable from sub-atoms to atoms
+        dict_sa_to_a = get_dict_sub_atom_to_atom(self.ontology)
+
         # Get the index for all compounds.
         # index = []
         # for x in X.itertuples():
@@ -113,18 +144,19 @@ class AtomFeatures:
         for row in X.itertuples():
             i = row[0]
             x = row[1]
-            comp_atoms = self.ontology.query('''
+            comp_sub_atoms = self.ontology.query('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?atom
+            SELECT DISTINCT ?sub_atom
             WHERE {
                 ?compound carcinogenesis:hasAtom ?atom_instance .
-                ?atom_instance a ?subclass .
-                ?subclass rdfs:subClassOf ?atom .
+                ?atom_instance a ?sub_atom .
             }
             ''', initBindings={'compound': rdflib.URIRef(x)}
             )
-            for atom in comp_atoms:
-                atom_column = atom[0].n3().split('#')[1].split('>')[0]
+            for sub_atom in comp_sub_atoms:
+                sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
+                atom_label = dict_sa_to_a[sub_atom_label]
+                atom_column = atom_label
                 hasAtom.loc[i, atom_column] = 1
         return hasAtom
 
