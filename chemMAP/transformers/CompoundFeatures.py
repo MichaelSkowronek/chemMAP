@@ -137,6 +137,87 @@ def get_dict_sub_atom_to_atom(ontology):
     return dict_sa_to_a
 
 
+# Gets all the Structures in the Carcinogenesis Ontology.
+# ontology: Graph
+# return: structs: list of URIRef, struct_labels: list of strings
+def get_structs(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/Structs.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    query = """
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT ?struct
+            WHERE {
+                ?struct rdfs:subClassOf carcinogenesis:Structure .
+            }
+            """
+    results = ontology.query(query)
+    structs = []
+    struct_labels = []
+    for struct in results:
+        structs.append(struct[0])
+        # Get the name after #
+        struct_labels.append(struct[0].n3().split('#')[1].split('>')[0])
+
+    pickle.dump((structs, struct_labels), open(pickled_file, "wb"))
+    return structs, struct_labels
+
+
+# Gets all the Sub-Structures of Structures in the Carcinogenesis Ontology.
+# ontology: Graph
+# return: sub_structs: list of URIRef, sub_struct_labels: list of strings
+def get_sub_structs(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/SubStructs.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    structs, struct_labels = get_structs(ontology)
+    sub_structs = []
+    sub_struct_labels = []
+    for struct in structs:
+        query = """
+                PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+                SELECT ?sub_struct
+                WHERE {
+                    ?sub_struct rdfs:subClassOf ?struct .
+                }
+                """
+        results = ontology.query(query, initBindings={'struct': struct})
+        for result in results:
+            sub_structs.append(result[0])
+            sub_struct_labels.append(result[0].n3().split('#')[1].split('>')[0])
+
+    pickle.dump((sub_structs, sub_struct_labels), open(pickled_file, "wb"))
+    return sub_structs, sub_struct_labels
+
+
+# Calculates a hashtable(dict) which maps sub-structs to structs.
+# The hashtable keys are the str name of the sub-struct.
+# The hashtable values are the str name of the corresponding struct.
+def get_dict_sub_struct_to_struct(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/DictSsToS.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    structs, struct_labels = get_structs(ontology)
+    dict_ss_to_s = {}
+    for struct, struct_label in zip(structs, struct_labels):
+        query = """
+                    PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+                    SELECT ?sub_struct
+                    WHERE {
+                        ?sub_struct rdfs:subClassOf ?struct .
+                    }
+                    """
+        results = ontology.query(query, initBindings={'struct': struct})
+        for result in results:
+            result_label = result[0].n3().split('#')[1].split('>')[0]
+            dict_ss_to_s[result_label] = struct_label
+
+    pickle.dump(dict_ss_to_s, open(pickled_file, "wb"))
+    return dict_ss_to_s
+
 
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
 # NOTE: These are only the super-classes of atoms. A transformer for all atom classes exists also.
@@ -335,3 +416,61 @@ class BondFeatures:
         return self.transform(X)
 
 
+# Transforms X into 41 features, one for each struct and sub-struct. A feature is 1 if x_i in X has this struct and 0
+# otherwise.
+class AllStructFeatures:
+
+    def __init__(self, ontology):
+        self.ontology = ontology
+
+    # No fit needed.
+    def fit(self):
+        return self
+
+    # Transforms X into 41 features, one for each struct and sub-struct. A feature is 1 if x_i in X has this struct and 0
+    # otherwise.
+    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
+    # returns a pd.DataFrame
+    def transform(self, X):
+        X = pd.DataFrame(X)
+
+        # First get all the structs there are and the corresponding labels.
+        structs, struct_labels = get_structs(self.ontology)
+        struct_labels = np.array(struct_labels)
+        sub_structs, sub_struct_labels = get_sub_structs(self.ontology)
+        sub_struct_labels = np.array(sub_struct_labels)
+
+        # For speedup we also need a hashtable from sub-structs to structs
+        dict_ss_to_s = get_dict_sub_struct_to_struct(self.ontology)
+
+        # Check for each example if it has an struct of the structs or not.
+        hasStruct = pd.DataFrame(data=np.zeros((len(X), len(structs)), dtype=int), columns=struct_labels)
+        hasSubStruct = pd.DataFrame(data=np.zeros((len(X), len(sub_structs)), dtype=int), columns=sub_struct_labels)
+        featureMatrix = pd.concat((hasStruct, hasSubStruct), axis=1)
+        for row in X.itertuples():
+            i = row[0]
+            x = row[1]
+            # Note: Can be Struct or Sub-Struct
+            comp_structs = self.ontology.query('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?struct
+            WHERE {
+                ?compound carcinogenesis:hasStructure ?struct_instance .
+                ?struct_instance a ?struct .
+            }
+            ''', initBindings={'compound': rdflib.URIRef(x)}
+            )
+            for struct in comp_structs:
+                # Set 1 for the struct
+                struct_label = struct[0].n3().split('#')[1].split('>')[0]
+                featureMatrix.loc[i, struct_label] = 1
+
+                # Set 1 for the super-struct if struct has a super-class.
+                if struct_label in dict_ss_to_s:
+                    super_struct_label = dict_ss_to_s[struct_label]
+                    featureMatrix.loc[i, super_struct_label] = 1
+        return featureMatrix
+
+    # Without fit this is trivial.
+    def fit_transform(self, X):
+        return self.transform(X)
