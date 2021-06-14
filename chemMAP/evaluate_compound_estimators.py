@@ -15,7 +15,7 @@ from chemMAP.transformers.CompoundFeatures import get_compounds
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [estimators.DecisionTreeOnAtoms] # or estimators.__all__
+estimator_list = [estimators.DecisionTreeOnClasses] # or estimators.__all__
 
 if __name__ == "__main__":
 
