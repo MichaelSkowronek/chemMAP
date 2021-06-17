@@ -241,6 +241,70 @@ def get_dict_sub_struct_to_struct(ontology):
     return dict_ss_to_s
 
 
+# Gets all the DataProperties in the Carcinogenesis Ontology.
+# ontology: Graph
+# return: bonds: list of URIRef, bond_labels: list of strings
+def get_data_properties(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/DataProperties.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    query = """
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    SELECT ?prop
+    WHERE {
+        ?prop a owl:DatatypeProperty .
+    }
+    """
+    results = ontology.query(query)
+    props = []
+    prop_labels = []
+    for prop in results:
+        props.append(prop[0])
+        # Get the name after #
+        prop_labels.append(prop[0].n3().split('#')[1].split('>')[0])
+
+    pickle.dump((props, prop_labels), open(pickled_file, "wb"))
+    return props, prop_labels
+
+# Calculates a hashmap which maps for each DataProperty, indexed by the name after '#' in the IRI, to another hashmap
+# which represents the triples (individual, DataProperty, bool) from the ontology. The individual is the key and is
+# given as str which is the name of the individual, i.e. the str after '#' in the IRI.
+# with_charge=False says that we do not want a hashmap for the charge. This is because charge has not Compound but
+# Atom as domain.
+def get_data_props_indi_maps(ontology, with_charge=False):
+    pickled_file = "chemMAP/transformers/pcl_files/DataProbIndiMaps.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    props, prop_labels = get_data_properties(ontology)
+    if with_charge is False:
+        props.remove(rdflib.term.URIRef('http://dl-learner.org/carcinogenesis#charge'))
+        prop_labels.remove('charge')
+    else:
+        # TODO Implement the hashmap for charge propertly, i.e. first infer if each atom has equal charge such that
+        # TODO we only need to add entries for the atom classes.
+        print('WARNING: DataProperty Charge has no implementation yet.')
+
+    data_prop_maps = {}
+    for prop in prop_labels:
+        indi_to_bool = {}
+        propIRI = "http://dl-learner.org/carcinogenesis#{}".format(prop)
+        resultset = ontology.query('''
+        SELECT ?indi ?bool
+        WHERE {
+            ?indi ?prop ?bool .
+        }
+        ''', initBindings={'prop': rdflib.term.URIRef(propIRI)})
+        for result in resultset:
+            indi_name = result[0].n3().split('#')[1].split('>')[0]
+            indi_to_bool[indi_name] = bool(result[1])
+        data_prop_maps[prop] = indi_to_bool
+
+    pickle.dump(data_prop_maps, open(pickled_file, "wb"))
+    return data_prop_maps
+
+
 # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
 # NOTE: These are only the super-classes of atoms. A transformer for all atom classes exists also.
 class AtomFeatures:
@@ -491,6 +555,56 @@ class AllStructFeatures:
                 if struct_label in dict_ss_to_s:
                     super_struct_label = dict_ss_to_s[struct_label]
                     featureMatrix.loc[i, super_struct_label] = 1
+        return featureMatrix
+
+    # Without fit this is trivial.
+    def fit_transform(self, X):
+        return self.transform(X)
+
+
+# Transforms X into 14 features, one for each DataProperty with 'charge' beeing optional. A feature is 1 if x_i in
+# X is true for the corresponding property, -1 if false, 0 if no data is given.
+class AllDataPropertyFeatures:
+
+    def __init__(self, ontology, with_charge=False):
+        self.ontology = ontology
+        self.with_charge = with_charge
+
+    # No fit needed.
+    def fit(self):
+        return self
+
+    # Transforms X into 14 features, one for each DataProperty with 'charge' beeing optional. A feature is 1 if x_i in
+    # X is true for the corresponding property, -1 if false, 0 if no data is given.
+    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
+    # returns a pd.DataFrame
+    def transform(self, X):
+        X = pd.DataFrame(X)
+
+        props, prop_labels = get_data_properties(self.ontology)
+        if self.with_charge is False:
+            props.remove(rdflib.term.URIRef('http://dl-learner.org/carcinogenesis#charge'))
+            prop_labels.remove('charge')
+        else:
+            # TODO Implement the hashmap for charge propertly, i.e. first infer if each atom has equal charge such that
+            # TODO we only need to add entries for the atom classes.
+            print('WARNING: DataProperty Charge has no implementation yet.')
+
+        prop_indi_map = get_data_props_indi_maps(self.ontology, with_charge=self.with_charge)
+
+        featureMatrix = pd.DataFrame(data=np.zeros((len(X), len(props)), dtype=int), columns=prop_labels)
+        for row in X.itertuples():
+            i = row[0]
+            x = row[1]
+            x_name = x.n3().split('#')[1].split('>')[0]
+            for prop in prop_labels:
+                cur_prop_map = prop_indi_map[prop]
+                if x_name in cur_prop_map:
+                    if cur_prop_map[x_name] is True:
+                        featureMatrix.loc[i, prop] = 1
+                    else:
+                        if cur_prop_map[x_name] is False:
+                            featureMatrix.loc[i, prop] = -1
         return featureMatrix
 
     # Without fit this is trivial.
