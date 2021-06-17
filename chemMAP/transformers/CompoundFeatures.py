@@ -25,6 +25,8 @@ def get_compounds(ontology, X, y):
     return compounds, labels
 
 
+# Returns a Frozenset of all compounds.
+# Type of a set entry is str and it's the compound name after '#'
 def get_all_compounds(ontology):
     pickled_file = "chemMAP/transformers/pcl_files/CompoundsSet.pcl"
     if os.path.exists(pickled_file):
