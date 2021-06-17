@@ -43,11 +43,10 @@ if __name__ == "__main__":
             lp_name = lp["name"]
             log(f"learning problem {lp_name}, {i+1}/{len(learning_problems)}")
             estimator = estimator_cls(ontology)
-            log("Filtering by compounds...")
             X, y = get_compounds(ontology, lp['examples'], lp['labels'])
             ones = sum(y)
             zeros = sum((np.array(y) - 1) ** 2)
-            log("Filtering finished. Number of compounds = {} with {} 1s and {} 0s.".format(len(X), ones, zeros))
+            log("Number of compounds = {} with {} 1s and {} 0s.".format(len(X), ones, zeros))
             log("Starting cross-validation...")
             lp_result = carcino_CV_score(estimator, X, y)
             pprint(lp_result)

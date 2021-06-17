@@ -12,20 +12,40 @@ def get_compounds(ontology, X, y):
     y = pd.DataFrame(y)
     compounds = []
     labels = []
-    for tuple in pd.concat((X, y), axis=1).itertuples():
-        x = tuple[1]
-        y = tuple[2]
-        is_compound = bool(ontology.query('''
-        PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-        ASK {
-            ?s a carcinogenesis:Compound .
-        }
-        ''', initBindings={'s': rdflib.URIRef(x)}
-        ))
+
+    comp_set = get_all_compounds(ontology)
+
+    for row in pd.concat((X, y), axis=1).itertuples():
+        x = row[1]
+        y = row[2]
+        is_compound = x.n3().split('#')[1].split('>')[0] in comp_set
         if is_compound:
             compounds.append(x)
             labels.append(y)
     return compounds, labels
+
+
+def get_all_compounds(ontology):
+    pickled_file = "chemMAP/transformers/pcl_files/CompoundsSet.pcl"
+    if os.path.exists(pickled_file):
+        return pickle.load(open(pickled_file, "rb"))
+
+    all_comp = []
+    query = """
+    PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+    SELECT ?comp
+    WHERE{
+        ?comp a carcinogenesis:Compound .
+    }
+    """
+    results = ontology.query(query)
+    for result in results:
+        result_label = result[0].n3().split('#')[1].split('>')[0]
+        all_comp.append(result_label)
+    all_comp_set = frozenset(all_comp)
+
+    pickle.dump(all_comp_set, open(pickled_file, "wb"))
+    return all_comp_set
 
 
 # Gets all the Atoms in the Carcinogenesis Ontology.
