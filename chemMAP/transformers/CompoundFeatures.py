@@ -305,7 +305,7 @@ def get_data_props_indi_maps(ontology, with_charge=False):
     return data_prop_maps
 
 
-# Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+# Transforms X into 27 features, one for each atom. The number of atoms is counted.
 # NOTE: These are only the super-classes of atoms. A transformer for all atom classes exists also.
 class AtomFeatures:
 
@@ -316,7 +316,7 @@ class AtomFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 27 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+    # Transforms X into 27 features, one for each atom. The number of atoms is counted.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
@@ -346,7 +346,7 @@ class AtomFeatures:
             for sub_atom in comp_sub_atoms:
                 sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
                 atom_label = dict_sa_to_a[sub_atom_label]
-                hasAtom.loc[i, atom_label] = 1
+                hasAtom.loc[i, atom_label] += 1
         return hasAtom
 
     # Without fit this is trivial.
@@ -354,8 +354,7 @@ class AtomFeatures:
         return self.transform(X)
 
 
-# Transforms X into 66 features, one for each subclass of an atom. A feature is 1 if x_i in X has this sub-atom and 0
-# otherwise.
+# Transforms X into 66 features, one for each subclass of an atom. The number of atoms is counted.
 class SubAtomFeatures:
 
     def __init__(self, ontology):
@@ -365,8 +364,7 @@ class SubAtomFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 66 features, one for each subclass of an atom. A feature is 1 if x_i in X has this sub-atom and
-    # 0 otherwise.
+    # Transforms X into 66 features, one for each subclass of an atom. The number of atoms is counted.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
@@ -392,7 +390,7 @@ class SubAtomFeatures:
             )
             for sub_atom in comp_atoms:
                 atom_column = sub_atom[0].n3().split('#')[1].split('>')[0]
-                hasAtom.loc[i, atom_column] = 1
+                hasAtom.loc[i, atom_column] += 1
         return hasAtom
 
     # Without fit this is trivial.
@@ -400,8 +398,7 @@ class SubAtomFeatures:
         return self.transform(X)
 
 
-# Transforms X into 93 features, one for each atom and sub-atom. A feature is 1 if x_i in X has this atom and 0
-# otherwise.
+# Transforms X into 93 features, one for each atom and sub-atom. The number of atoms and sub-atoms is counted.
 class AllAtomFeatures:
 
     def __init__(self, ontology):
@@ -411,7 +408,7 @@ class AllAtomFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 93 features, one for each atom. A feature is 1 if x_i in X has this atom and 0 otherwise.
+    # Transforms X into 93 features, one for each atom and sub-atom. The number of atoms and sub-atoms is counted.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
@@ -443,21 +440,21 @@ class AllAtomFeatures:
             ''', initBindings={'compound': rdflib.URIRef(x)}
             )
             for sub_atom in comp_sub_atoms:
-                # Set 1 for the sub_atom
+                # Add 1 for the sub_atom
                 sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
-                featureMatrix.loc[i, sub_atom_label] = 1
+                featureMatrix.loc[i, sub_atom_label] += 1
 
-                # Set 1 for the atom
+                # Add 1 for the atom
                 atom_label = dict_sa_to_a[sub_atom_label]
-                featureMatrix.loc[i, atom_label] = 1
+                featureMatrix.loc[i, atom_label] += 1
         return featureMatrix
 
     # Without fit this is trivial.
     def fit_transform(self, X):
         return self.transform(X)
 
-# Transforms X into 4 features, one for each bond. A feature is 1 if x_i in X has this bond and
-    # 0 otherwise.
+
+# Transforms X into 4 features, one for each bond. The number of bonds is counted.
 class BondFeatures:
 
     def __init__(self, ontology):
@@ -467,8 +464,7 @@ class BondFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 4 features, one for each bond. A feature is 1 if x_i in X has this bond and
-    # 0 otherwise.
+    # Transforms X into 4 features, one for each bond. The number of bonds is counted.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
@@ -494,7 +490,7 @@ class BondFeatures:
                                              )
             for bond in comp_bonds:
                 bond_column = bond[0].n3().split('#')[1].split('>')[0]
-                feature_matrix.loc[i, bond_column] = 1
+                feature_matrix.loc[i, bond_column] += 1
         return feature_matrix
 
     # Without fit this is trivial.
@@ -502,8 +498,8 @@ class BondFeatures:
         return self.transform(X)
 
 
-# Transforms X into 41 features, one for each struct and sub-struct. A feature is 1 if x_i in X has this struct and 0
-# otherwise.
+# Transforms X into 41 features, one for each struct and sub-struct. The number of structs and sub-structs is
+# counted.
 class AllStructFeatures:
 
     def __init__(self, ontology):
@@ -513,8 +509,8 @@ class AllStructFeatures:
     def fit(self):
         return self
 
-    # Transforms X into 41 features, one for each struct and sub-struct. A feature is 1 if x_i in X has this struct and 0
-    # otherwise.
+    # Transforms X into 41 features, one for each struct and sub-struct. The number of structs and sub-structs is
+    # counted.
     # X: list/np.array/pd.DataFrame of str which describe compound IRIs
     # returns a pd.DataFrame
     def transform(self, X):
@@ -547,14 +543,14 @@ class AllStructFeatures:
             ''', initBindings={'compound': rdflib.URIRef(x)}
             )
             for struct in comp_structs:
-                # Set 1 for the struct
+                # Add 1 for the struct
                 struct_label = struct[0].n3().split('#')[1].split('>')[0]
-                featureMatrix.loc[i, struct_label] = 1
+                featureMatrix.loc[i, struct_label] += 1
 
-                # Set 1 for the super-struct if struct has a super-class.
+                # Add 1 for the super-struct if struct has a super-class.
                 if struct_label in dict_ss_to_s:
                     super_struct_label = dict_ss_to_s[struct_label]
-                    featureMatrix.loc[i, super_struct_label] = 1
+                    featureMatrix.loc[i, super_struct_label] += 1
         return featureMatrix
 
     # Without fit this is trivial.
