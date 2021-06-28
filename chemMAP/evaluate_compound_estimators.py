@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 
 import chemMAP.estimators as estimators
-from chemMAP.estimators.DecisionTreeAtom import DecisionTreeAtom
 from chemMAP.carcino_CV_score import carcino_CV_score
 from chemMAP.CarcinogenesisOWLparser import load_ontology
 from chemMAP.LearningProblemParser import get_learning_problems
@@ -16,7 +15,7 @@ from chemMAP.transformers.utils import filter_compounds
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [DecisionTreeAtom, estimators.CompoundDecisionTree] # or estimators.__all__
+estimator_list = [estimators.CompoundDecisionTree] # or estimators.__all__
 
 if __name__ == "__main__":
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
             estimator = estimator_cls(ontology)
             X, y = filter_compounds(ontology, lp['examples'], lp['labels'])
             ones = sum(y)
-            zeros = sum((np.array(y) - 1) ** 2)
+            zeros = np.sum(np.abs(np.array(y) - 1))
             log("Number of compounds = {} with {} 1s and {} 0s.".format(len(X), ones, zeros))
             log("Starting cross-validation...")
             lp_result = carcino_CV_score(estimator, X, y)
