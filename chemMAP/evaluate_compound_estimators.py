@@ -15,7 +15,7 @@ from chemMAP.transformers.CompoundFeatures import get_compounds
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [estimators.DecisionTreeOnClasses] # or estimators.__all__
+estimator_list = [estimators.CompoundDecisionTree] # or estimators.__all__
 
 if __name__ == "__main__":
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     ontology = load_ontology()
 
     log("loading learning problems...")
-    learning_problems = get_learning_problems()
+    learning_problems = get_learning_problems(source="data/kg-mini-project-train_v2.ttl")
 
     log("starting evaluation")
     mean_results = {}
