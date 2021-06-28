@@ -5,12 +5,15 @@ import chemMAP.estimators as estimators
 from chemMAP.carcino_CV_score import carcino_CV_score
 from chemMAP.CarcinogenesisOWLparser import load_ontology
 from chemMAP.LearningProblemParser import get_learning_problems
+from chemMAP.transformers.utils import filter_compounds, filter_bonds, filter_structs, filter_atoms
 from pprint import pprint
 from pathlib import Path
+from chemMAP.estimators.DecisionTreeBond import DecisionTreeBond
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [estimators.NaiveClassEstimator] # or estimators.__all__
+estimator_list = [DecisionTreeBond] # or estimators.__all__
+data_filter = filter_bonds # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
 
 if __name__ == "__main__":
 
@@ -38,8 +41,20 @@ if __name__ == "__main__":
             lp_name = lp["name"]
             log(f"learning problem {lp_name}, {i+1}/{len(learning_problems)}")
             estimator = estimator_cls(ontology)
-            lp_result = carcino_CV_score(estimator, lp["examples"], lp["labels"])
+            if data_filter is not None:
+                examples, labels = data_filter(ontology, lp["examples"], lp["labels"])
+            else:
+                examples, labels = lp["examples"], lp["labels"]
+            included = sum(labels)
+            excluded = len(labels) - included
+            if included == 0 or excluded == 0:
+                log("Learning Problem is trivial, skipping...")
+                continue
+            log(f"Number of examples: {len(labels)}, {included} included and {excluded} excluded.")
+            log("Starting cross-validation...")
+            lp_result = carcino_CV_score(estimator, examples, labels)
             pprint(lp_result)
+            log("Finished cross-validation.")
             estimator_results[lp_name] = lp_result
         
         mean_result = {}
