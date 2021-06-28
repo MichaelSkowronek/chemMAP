@@ -25,6 +25,19 @@ class CompoundDecisionTree(GenericEstimator):
         All_features = pd.concat((Atom_features, Bond_features, Struct_features, Prop_features), axis=1)
         self.tree.fit(All_features, y)
 
+        # Prediction Rule Output
+        # print("Feature importance for the current fit:")
+        # someImportant = False
+        # for row in pd.DataFrame(data=self.tree.feature_importances_, index=All_features.columns).itertuples():
+        #     if row[1] != 0:
+        #         print("{} : {}".format(row[0], row[1]))
+        #         someImportant = True
+        # if not someImportant:
+        #     print("No Feature is important.")
+        # print("\n")
+
+
+
     def predict(self, X):
         Atom_features = self.atomTrans.transform(X)
         Bond_features = self.bondTrans.transform(X)
