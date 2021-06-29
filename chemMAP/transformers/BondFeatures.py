@@ -4,7 +4,7 @@ import pandas as pd
 
 import pickle
 from sklearn.preprocessing import OneHotEncoder
-
+from rdflib.plugins.sparql import prepareQuery
 from chemMAP.transformers.utils import get_atoms
 from chemMAP.transformers.utils import get_dict_sub_atom_to_atom
 from chemMAP.transformers.utils import get_sub_atoms
@@ -14,6 +14,13 @@ class BondFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.feature_extract_query = prepareQuery('''
+                PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+                SELECT DISTINCT ?atom
+                WHERE {
+                    ?bond_instance carcinogenesis:inBond ?atom .
+                }
+                ''')
 
     # No fit needed.
     def fit(self):
@@ -45,13 +52,7 @@ class BondFeatures:
         def extract_features(bond_uri):
             bond_type = uri2str(type_map[bond_uri])
             #find both atoms
-            results = self.ontology.query('''
-                PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-                SELECT DISTINCT ?atom
-                WHERE {
-                    ?bond_instance carcinogenesis:inBond ?atom .
-                }
-                ''', initBindings={'bond_instance': rdflib.URIRef(bond_uri)}
+            results = self.ontology.query(self.feature_extract_query, initBindings={'bond_instance': rdflib.URIRef(bond_uri)}
                                                 )
             first_atom = None
             second_atom = None
