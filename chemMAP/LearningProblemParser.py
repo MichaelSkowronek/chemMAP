@@ -91,7 +91,7 @@ class LearningProblemParser:
 import os
 import pickle
 
-def get_learning_problems(source="data/kg-mini-project-train.ttl"):
+def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
 
     pickled_file = source.split(".")[0]+".pcl"
     if os.path.exists(pickled_file):
