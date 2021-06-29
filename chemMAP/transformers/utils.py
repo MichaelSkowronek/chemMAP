@@ -2,6 +2,7 @@ import rdflib
 import pandas as pd
 import os
 import pickle
+from rdflib.plugins.sparql import prepareQuery
 
 def uri2str(uri):
  return uri.n3().split('#')[1].split('>')[0]
@@ -147,14 +148,14 @@ def get_sub_atoms(ontology):
     atoms, atom_labels = get_atoms(ontology)
     sub_atoms = []
     sub_atom_labels = []
-    for atom in atoms:
-        query = """
+    query = prepareQuery("""
                 PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
                 SELECT ?sub_atom
                 WHERE {
                     ?sub_atom rdfs:subClassOf ?atom .
                 }
-                """
+                """)
+    for atom in atoms:
         results = ontology.query(query, initBindings={'atom': atom})
         for result in results:
             sub_atoms.append(result[0])
@@ -201,14 +202,14 @@ def get_dict_sub_atom_to_atom(ontology):
 
     atoms, atom_labels = get_atoms(ontology)
     dict_sa_to_a = {}
-    for atom, atom_label in zip(atoms, atom_labels):
-        query = """
+    query = prepareQuery("""
                     PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
                     SELECT ?sub_atom
                     WHERE {
                         ?sub_atom rdfs:subClassOf ?atom .
                     }
-                    """
+                    """)
+    for atom, atom_label in zip(atoms, atom_labels):
         results = ontology.query(query, initBindings={'atom': atom})
         for result in results:
             result_label = uri2str(result[0])
@@ -256,14 +257,14 @@ def get_sub_structs(ontology):
     structs, struct_labels = get_structs(ontology)
     sub_structs = []
     sub_struct_labels = []
-    for struct in structs:
-        query = """
+    query = prepareQuery("""
                 PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
                 SELECT ?sub_struct
                 WHERE {
                     ?sub_struct rdfs:subClassOf ?struct .
                 }
-                """
+                """)
+    for struct in structs:
         results = ontology.query(query, initBindings={'struct': struct})
         for result in results:
             sub_structs.append(result[0])
@@ -283,14 +284,14 @@ def get_dict_sub_struct_to_struct(ontology):
 
     structs, struct_labels = get_structs(ontology)
     dict_ss_to_s = {}
-    for struct, struct_label in zip(structs, struct_labels):
-        query = """
+    query = prepareQuery("""
                     PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
                     SELECT ?sub_struct
                     WHERE {
                         ?sub_struct rdfs:subClassOf ?struct .
                     }
-                    """
+                    """)
+    for struct, struct_label in zip(structs, struct_labels):
         results = ontology.query(query, initBindings={'struct': struct})
         for result in results:
             result_label = uri2str(result[0])
@@ -346,15 +347,16 @@ def get_data_props_indi_maps(ontology, with_charge=False):
         print('WARNING: DataProperty Charge has no implementation yet.')
 
     data_prop_maps = {}
-    for prop in prop_labels:
-        indi_to_bool = {}
-        propIRI = "http://dl-learner.org/carcinogenesis#{}".format(prop)
-        resultset = ontology.query('''
+    query = prepareQuery('''
         SELECT ?indi ?bool
         WHERE {
             ?indi ?prop ?bool .
         }
-        ''', initBindings={'prop': rdflib.term.URIRef(propIRI)})
+        ''')
+    for prop in prop_labels:
+        indi_to_bool = {}
+        propIRI = "http://dl-learner.org/carcinogenesis#{}".format(prop)
+        resultset = ontology.query(query, initBindings={'prop': rdflib.term.URIRef(propIRI)})
         for result in resultset:
             indi_name = uri2str(result[0])
             indi_to_bool[indi_name] = bool(result[1])

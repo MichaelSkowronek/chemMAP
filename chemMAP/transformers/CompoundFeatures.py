@@ -2,6 +2,7 @@ import rdflib
 import numpy as np
 import pandas as pd
 
+from rdflib.plugins.sparql import prepareQuery
 from chemMAP.transformers.utils import get_atoms
 from chemMAP.transformers.utils import get_dict_sub_atom_to_atom
 from chemMAP.transformers.utils import get_sub_atoms
@@ -18,6 +19,14 @@ class AtomFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.atom_query = prepareQuery('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?sub_atom
+            WHERE {
+                ?compound carcinogenesis:hasAtom ?atom_instance .
+                ?atom_instance a ?sub_atom .
+            }
+            ''')
 
     # No fit needed.
     def fit(self):
@@ -41,14 +50,7 @@ class AtomFeatures:
         for row in X.itertuples():
             i = row[0]
             x = row[1]
-            comp_sub_atoms = self.ontology.query('''
-            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?sub_atom
-            WHERE {
-                ?compound carcinogenesis:hasAtom ?atom_instance .
-                ?atom_instance a ?sub_atom .
-            }
-            ''', initBindings={'compound': rdflib.URIRef(x)}
+            comp_sub_atoms = self.ontology.query(self.atom_query, initBindings={'compound': rdflib.URIRef(x)}
             )
             for sub_atom in comp_sub_atoms:
                 sub_atom_label = sub_atom[0].n3().split('#')[1].split('>')[0]
@@ -66,6 +68,14 @@ class SubAtomFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.sub_atom_query = prepareQuery('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?sub_atom
+            WHERE {
+                ?compound carcinogenesis:hasAtom ?atom_instance .
+                ?atom_instance a ?sub_atom .
+            }
+            ''')
 
     # No fit needed.
     def fit(self):
@@ -86,14 +96,7 @@ class SubAtomFeatures:
         for row in X.itertuples():
             i = row[0]
             x = row[1]
-            comp_atoms = self.ontology.query('''
-            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?sub_atom
-            WHERE {
-                ?compound carcinogenesis:hasAtom ?atom_instance .
-                ?atom_instance a ?sub_atom .
-            }
-            ''', initBindings={'compound': rdflib.URIRef(x)}
+            comp_atoms = self.ontology.query(self.sub_atom_query, initBindings={'compound': rdflib.URIRef(x)}
             )
             for sub_atom in comp_atoms:
                 atom_column = sub_atom[0].n3().split('#')[1].split('>')[0]
@@ -110,6 +113,14 @@ class AllAtomFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.all_atom_query = prepareQuery('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?sub_atom
+            WHERE {
+                ?compound carcinogenesis:hasAtom ?atom_instance .
+                ?atom_instance a ?sub_atom .
+            }
+            ''')
 
     # No fit needed.
     def fit(self):
@@ -136,14 +147,7 @@ class AllAtomFeatures:
         for row in X.itertuples():
             i = row[0]
             x = row[1]
-            comp_sub_atoms = self.ontology.query('''
-            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?sub_atom
-            WHERE {
-                ?compound carcinogenesis:hasAtom ?atom_instance .
-                ?atom_instance a ?sub_atom .
-            }
-            ''', initBindings={'compound': rdflib.URIRef(x)}
+            comp_sub_atoms = self.ontology.query(self.all_atom_query, initBindings={'compound': rdflib.URIRef(x)}
             )
             for sub_atom in comp_sub_atoms:
                 # Add 1 for the sub_atom
@@ -165,6 +169,14 @@ class BondFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.bond_query = prepareQuery('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?bond
+            WHERE {
+                ?compound carcinogenesis:hasBond ?bond_instance .
+                ?bond_instance a ?bond .
+            }
+            ''')
 
     # No fit needed.
     def fit(self):
@@ -185,15 +197,7 @@ class BondFeatures:
         for row in X.itertuples():
             i = row[0]
             x = row[1]
-            comp_bonds = self.ontology.query('''
-            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?bond
-            WHERE {
-                ?compound carcinogenesis:hasBond ?bond_instance .
-                ?bond_instance a ?bond .
-            }
-            ''', initBindings={'compound': rdflib.URIRef(x)}
-                                             )
+            comp_bonds = self.ontology.query(self.bond_query, initBindings={'compound': rdflib.URIRef(x)})
             for bond in comp_bonds:
                 bond_column = bond[0].n3().split('#')[1].split('>')[0]
                 feature_matrix.loc[i, bond_column] += 1
@@ -210,6 +214,14 @@ class AllStructFeatures:
 
     def __init__(self, ontology):
         self.ontology = ontology
+        self.all_struct_query = prepareQuery('''
+            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
+            SELECT DISTINCT ?struct
+            WHERE {
+                ?compound carcinogenesis:hasStructure ?struct_instance .
+                ?struct_instance a ?struct .
+            }
+            ''')
 
     # No fit needed.
     def fit(self):
@@ -239,15 +251,7 @@ class AllStructFeatures:
             i = row[0]
             x = row[1]
             # Note: Can be Struct or Sub-Struct
-            comp_structs = self.ontology.query('''
-            PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
-            SELECT DISTINCT ?struct
-            WHERE {
-                ?compound carcinogenesis:hasStructure ?struct_instance .
-                ?struct_instance a ?struct .
-            }
-            ''', initBindings={'compound': rdflib.URIRef(x)}
-            )
+            comp_structs = self.ontology.query(self.all_struct_query, initBindings={'compound': rdflib.URIRef(x)})
             for struct in comp_structs:
                 # Add 1 for the struct
                 struct_label = struct[0].n3().split('#')[1].split('>')[0]
