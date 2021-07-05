@@ -7,7 +7,7 @@ from chemMAP.transformers.CompoundFeatures import BondFeatures
 from chemMAP.transformers.CompoundFeatures import AllStructFeatures
 from chemMAP.transformers.CompoundFeatures import AllDataPropertyFeatures
 
-class CompoundDecisionTree(GenericEstimator):
+class DecisionTreeCompound(GenericEstimator):
 
     def __init__(self, ontology):
         super().__init__(ontology=ontology)
