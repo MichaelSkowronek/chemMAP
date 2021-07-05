@@ -9,11 +9,12 @@ from chemMAP.transformers.utils import filter_compounds, filter_bonds, filter_st
 from pprint import pprint
 from pathlib import Path
 from chemMAP.estimators.DecisionTreeBond import DecisionTreeBond
+from chemMAP.estimators.DecisionTreeAtom import DecisionTreeAtom
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [DecisionTreeBond] # or estimators.__all__
-data_filter = filter_bonds # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
+estimator_list = [DecisionTreeAtom] # or estimators.__all__
+data_filter = filter_atoms # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
 
 if __name__ == "__main__":
 
@@ -29,7 +30,9 @@ if __name__ == "__main__":
     ontology = load_ontology()
 
     log("loading learning problems...")
-    learning_problems = get_learning_problems()
+    # learning_problems = get_learning_problems(source="data/kg-mini-project-grading.ttl")
+    learning_problems = get_learning_problems(source="data/kg-mini-project-train_v2.ttl")
+    # learning_problems = get_learning_problems(source="data/kg-mini-project-train.ttl")
 
     log("starting evaluation")
     mean_results = {}
