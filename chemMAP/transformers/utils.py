@@ -68,26 +68,37 @@ def filter_data(X, y, filter_fn):
 # Filter X, y  by compounds.
 # X: IRIs as pandas.DataFrame of str, y: label of the corresponding IRI as pandas.DataFrame.
 def filter_compounds(ontology, X, y):
-    compound_set = get_compound_set(ontology)
-    return filter_data(X,y,filter_fn=lambda i, x: uri2str(x) in compound_set)
-
+    classes = get_compound_set(ontology)
+    X = pd.DataFrame(X)
+    y = pd.DataFrame(y)
+    mask = [(uri2str(x[1]) in classes) for x in X.itertuples()]
+    return X[mask].iloc[:, 0].tolist(), y[mask].iloc[:, 0].tolist()
 
 def filter_atoms(ontology, X, y):
-    atom_set = set(get_atoms(ontology)[0])
-    types = get_rdf_types(ontology, X)
-    return filter_data(X,y,filter_fn=lambda i, x: types[i] in atom_set)
+    classes = set(get_sub_atoms(ontology)[0])
+    X_types = get_rdf_types(ontology, X)
+    mask = [(x in classes) for x in X_types]
+    X = pd.Series(X)
+    y = pd.Series(y)
+    return X[mask].tolist(), y[mask].tolist()
 
 
 def filter_bonds(ontology, X, y):
-    bond_set = set(get_bonds(ontology)[0])
-    types = get_rdf_types(ontology, X)
-    return filter_data(X,y,filter_fn=lambda i, x: types[i] in bond_set)
+    classes = set(get_bonds(ontology)[0])
+    X_types = get_rdf_types(ontology, X)
+    mask = [(x in classes) for x in X_types]
+    X = pd.Series(X)
+    y = pd.Series(y)
+    return X[mask].tolist(), y[mask].tolist()
 
 
 def filter_structs(ontology, X, y):
-    struct_set = set(get_structs(ontology)[0])
-    types = get_rdf_types(ontology, X)
-    return filter_data(X,y,filter_fn=lambda i, x: types[i] in struct_set)
+    classes = set(get_structs(ontology)[0])
+    X_types = get_rdf_types(ontology, X)
+    mask = [(x in classes) for x in X_types]
+    X = pd.Series(X)
+    y = pd.Series(y)
+    return X[mask].tolist(), y[mask].tolist()
 
 
 # Returns a Frozenset of all compounds.
