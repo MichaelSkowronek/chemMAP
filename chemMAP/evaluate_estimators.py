@@ -12,11 +12,12 @@ from chemMAP.estimators.DecisionTreeBond import DecisionTreeBond
 from chemMAP.estimators.DecisionTreeAtom import DecisionTreeAtom
 from chemMAP.estimators.DecisionTreeStruct import DecisionTreeStruct
 from chemMAP.estimators.DecisionTreeCompound import DecisionTreeCompound
+from chemMAP.estimators.DecisionTreeAll import DecisionTreeAll
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [DecisionTreeCompound] # or estimators.__all__
-data_filter = filter_compounds # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
+estimator_list = [DecisionTreeAll]  # or estimators.__all__
+data_filter = None  # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
 
 if __name__ == "__main__":
 

@@ -93,7 +93,9 @@ def filter_bonds(ontology, X, y):
 
 
 def filter_structs(ontology, X, y):
-    classes = set(get_structs(ontology)[0])
+    structs = set(get_structs(ontology)[0])
+    substructs = set(get_sub_structs(ontology)[0])
+    classes = structs.union(substructs)
     X_types = get_rdf_types(ontology, X)
     mask = [(x in classes) for x in X_types]
     X = pd.Series(X)
