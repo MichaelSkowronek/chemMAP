@@ -4,12 +4,12 @@ import pandas as pd
 
 import pickle
 from sklearn.preprocessing import OneHotEncoder
-from rdflib.plugins.sparql import prepareQuery
 from chemMAP.transformers.utils import get_atoms
 from chemMAP.transformers.utils import get_dict_sub_atom_to_atom
 from chemMAP.transformers.utils import get_sub_atoms
-from chemMAP.transformers.utils import get_bonds
 from chemMAP.transformers.utils import uri2str
+
+
 class AtomFeatures:
 
     def __init__(self, ontology):

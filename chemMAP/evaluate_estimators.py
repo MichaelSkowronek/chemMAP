@@ -10,11 +10,12 @@ from pprint import pprint
 from pathlib import Path
 from chemMAP.estimators.DecisionTreeBond import DecisionTreeBond
 from chemMAP.estimators.DecisionTreeAtom import DecisionTreeAtom
+from chemMAP.estimators.DecisionTreeStruct import DecisionTreeStruct
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [DecisionTreeAtom] # or estimators.__all__
-data_filter = filter_atoms # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
+estimator_list = [DecisionTreeStruct] # or estimators.__all__
+data_filter = filter_structs # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
 
 if __name__ == "__main__":
 
