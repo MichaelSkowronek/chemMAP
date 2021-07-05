@@ -1,3 +1,4 @@
+import pandas as pd
 from rdflib import Graph, Literal, Namespace
 from chemMAP.LearningProblemParser import LearningProblemParser
 
@@ -14,7 +15,7 @@ Saving the results using the save_results_to_file method creates a file in the c
         '''
         appends the specified predictions (y_pred) for the ressources (X)  of a learning problem (lpNum)
         '''
-        self.predictions.append((lpNum, X, y_pred))
+        self.predictions.append((lpNum, pd.Series(X), pd.Series(y_pred)))
 
     def save_results_to_file(self, file_name = "predictions"):
         '''creates a rdf graph according to the requirements of the result format. 
