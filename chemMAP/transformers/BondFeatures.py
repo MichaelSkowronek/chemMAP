@@ -10,6 +10,7 @@ from chemMAP.transformers.utils import get_dict_sub_atom_to_atom
 from chemMAP.transformers.utils import get_sub_atoms
 from chemMAP.transformers.utils import get_bonds
 from chemMAP.transformers.utils import uri2str
+from chemMAP.transformers.utils import get_type_map
 class BondFeatures:
 
     def __init__(self, ontology):
@@ -29,8 +30,7 @@ class BondFeatures:
     def transform(self, X):
         bond_uris, bond_labels = get_bonds(self.ontology)
         bond_labels = np.array(bond_labels)
-        type_file = "chemMAP/transformers/pcl_files/rdf_types.pcl"
-        type_map = pickle.load(open(type_file, "rb"))
+        type_map = get_type_map(self.ontology)
         atom_uris, atom_labels = get_atoms(self.ontology)
         subatom_uris, subatom_labels = get_sub_atoms(self.ontology)
 

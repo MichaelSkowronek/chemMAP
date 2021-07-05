@@ -4,8 +4,10 @@ import os
 import pickle
 from rdflib.plugins.sparql import prepareQuery
 
+
 def uri2str(uri):
  return uri.n3().split('#')[1].split('>')[0]
+
 
 def get_rdf_type(ontology, item_uri):
     """Return type, 'a' property for given uri. It is assumed the type is unique per instance."""
@@ -19,24 +21,43 @@ def get_rdf_type(ontology, item_uri):
     for result in results:
         return result[0]
 
-def get_rdf_types(ontology, item_uris):
-    """Return types, 'a' property for given uris. It is assumed the type is unique per instance. Optimized for large uri lists"""
+
+def get_type_map(ontology):
+    """Return a map which maps individuals from the ontology to their types."""
     pickled_file = "chemMAP/transformers/pcl_files/rdf_types.pcl"
 
     if os.path.exists(pickled_file):
         type_map = pickle.load(open(pickled_file, "rb"))
     else:
         type_map = {}
+        individuals = ontology.query('''
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                SELECT ?indi
+                WHERE {
+                    { ?indi a ?class . }
+                    MINUS { ?indi a owl:Class }
+                    MINUS { ?indi a owl:Ontology }
+                    MINUS { ?indi a owl:ObjectProperty }
+                    MINUS { ?indi a owl:DatatypeProperty }
+                }
+                ''')
+        for indi in individuals:
+            type_map[indi[0]] = get_rdf_type(ontology, indi[0])
+        pickle.dump(type_map, open(pickled_file, "wb"))
+    return type_map
+
+
+def get_rdf_types(ontology, item_uris):
+    """Return types, 'a' property for given uris. It is assumed the type is unique per instance. Optimized for large uri lists"""
+    # Get a map which maps individuals from the ontology to their types.
+    type_map = get_type_map(ontology)
+
+    # Construct a list of the types for all individuals in item_uris.
     types = []
     for uri in item_uris:
-        if uri in type_map:
-            types.append(type_map[uri])
-        else:
-            item_type = get_rdf_type(ontology, uri)
-            type_map[uri] = item_type
-            types.append(item_type)
-    pickle.dump(type_map, open(pickled_file, "wb"))
+        types.append(type_map[uri])
     return types
+
 
 def get_all_of_type(ontology, type_uri):
     """Return all instances of given type."""
@@ -48,6 +69,7 @@ def get_all_of_type(ontology, type_uri):
     """
     results = ontology.query(query, initBindings={'type': type_uri})
     return list(results)
+
 
 def filter_data(X, y, filter_fn):
     """filter out examples, if filter_fn(index, feature) is False, they are dropped."""
@@ -65,6 +87,7 @@ def filter_data(X, y, filter_fn):
             labels.append(label)
     return features, labels
 
+
 # Filter X, y  by compounds.
 # X: IRIs as pandas.DataFrame of str, y: label of the corresponding IRI as pandas.DataFrame.
 def filter_compounds(ontology, X, y):
@@ -73,6 +96,7 @@ def filter_compounds(ontology, X, y):
     y = pd.DataFrame(y)
     mask = [(uri2str(x[1]) in classes) for x in X.itertuples()]
     return X[mask].iloc[:, 0].tolist(), y[mask].iloc[:, 0].tolist()
+
 
 def filter_atoms(ontology, X, y):
     classes = set(get_sub_atoms(ontology)[0])

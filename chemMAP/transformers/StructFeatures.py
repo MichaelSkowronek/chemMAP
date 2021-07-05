@@ -8,6 +8,7 @@ from chemMAP.transformers.utils import get_structs
 from chemMAP.transformers.utils import get_dict_sub_struct_to_struct
 from chemMAP.transformers.utils import get_sub_structs
 from chemMAP.transformers.utils import uri2str
+from chemMAP.transformers.utils import get_type_map
 
 
 class StructFeatures:
@@ -20,8 +21,7 @@ class StructFeatures:
         return self
 
     def transform(self, X):
-        type_file = "chemMAP/transformers/pcl_files/rdf_types.pcl"
-        type_map = pickle.load(open(type_file, "rb"))
+        type_map = get_type_map(self.ontology)
         struct_uris, struct_labels = get_structs(self.ontology)
         substruct_uris, substruct_labels = get_sub_structs(self.ontology)
 
