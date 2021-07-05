@@ -22,6 +22,32 @@ def get_rdf_type(ontology, item_uri):
         return result[0]
 
 
+def get_individuals(ontology):
+    """Returns the (frozen-) set of individuals from the ontology."""
+    pickled_file = "chemMAP/transformers/pcl_files/individuals.pcl"
+
+    if os.path.exists(pickled_file):
+        individuals = pickle.load(open(pickled_file, "rb"))
+    else:
+        individuals = ontology.query('''
+                    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                    SELECT ?indi
+                    WHERE {
+                        { ?indi a ?class . }
+                        MINUS { ?indi a owl:Class }
+                        MINUS { ?indi a owl:Ontology }
+                        MINUS { ?indi a owl:ObjectProperty }
+                        MINUS { ?indi a owl:DatatypeProperty }
+                    }
+                    ''')
+        indi_list = []
+        for indi in individuals:
+            indi_list.append(indi[0])
+        individuals = frozenset(indi_list)
+        pickle.dump(individuals, open(pickled_file, "wb"))
+    return individuals
+
+
 def get_type_map(ontology):
     """Return a map which maps individuals from the ontology to their types."""
     pickled_file = "chemMAP/transformers/pcl_files/rdf_types.pcl"
@@ -30,19 +56,9 @@ def get_type_map(ontology):
         type_map = pickle.load(open(pickled_file, "rb"))
     else:
         type_map = {}
-        individuals = ontology.query('''
-                PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                SELECT ?indi
-                WHERE {
-                    { ?indi a ?class . }
-                    MINUS { ?indi a owl:Class }
-                    MINUS { ?indi a owl:Ontology }
-                    MINUS { ?indi a owl:ObjectProperty }
-                    MINUS { ?indi a owl:DatatypeProperty }
-                }
-                ''')
+        individuals = get_individuals(ontology)
         for indi in individuals:
-            type_map[indi[0]] = get_rdf_type(ontology, indi[0])
+            type_map[indi] = get_rdf_type(ontology, indi)
         pickle.dump(type_map, open(pickled_file, "wb"))
     return type_map
 
