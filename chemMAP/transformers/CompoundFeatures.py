@@ -198,8 +198,6 @@ class AllDataPropertyFeatures:
             props.remove(rdflib.term.URIRef('http://dl-learner.org/carcinogenesis#charge'))
             prop_labels.remove('charge')
         else:
-            # TODO Implement the hashmap for charge propertly, i.e. first infer if each atom has equal charge such that
-            # TODO we only need to add entries for the atom classes.
             print('WARNING: DataProperty Charge has no implementation yet.')
 
         prop_indi_map = get_data_props_indi_maps(self.ontology, with_charge=self.with_charge)
