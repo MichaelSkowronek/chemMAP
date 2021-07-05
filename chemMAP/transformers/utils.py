@@ -87,23 +87,6 @@ def get_all_of_type(ontology, type_uri):
     return list(results)
 
 
-def filter_data(X, y, filter_fn):
-    """filter out examples, if filter_fn(index, feature) is False, they are dropped."""
-    X = pd.DataFrame(X)
-    y = pd.DataFrame(y)
-    features = []
-    labels = []
-
-    for idx, row in enumerate(pd.concat((X, y), axis=1).itertuples()):
-        feature = row[1]
-        label = row[2]
-
-        if filter_fn(idx, feature):
-            features.append(feature)
-            labels.append(label)
-    return features, labels
-
-
 # Filter X, y  by compounds.
 # X: IRIs as pandas.DataFrame of str, y: label of the corresponding IRI as pandas.DataFrame.
 def filter_compounds(ontology, X, y):
