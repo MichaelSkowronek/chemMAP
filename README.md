@@ -19,7 +19,7 @@ Structs: struct type, substruct type
 Compounds: counting all occurrances of
 	- bonds (bond type), 
 	- atoms (atom type, subatom type), 
-	- structs (struct type, substruct type
+	- structs (struct type, substruct type)
 	and adding data properties, which are of type owl:DatatypeProperty in the ontology.
 
 Generating these feature vectors we can train our 4 models. 
