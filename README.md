@@ -27,9 +27,8 @@ We decided to use Decision Trees as they were used previously on these type of c
 
 # Installation
 
-Install locally by executing `pip install git+https://github.com/alexanderwerning/chemMAP` (or download and execute `pip install chemMAP`).
+Clone the repository `https://github.com/alexanderwerning/chemMAP.git` or download it. Install the libary chemMAP with `pip install chemMAP`.
 
-To predict the remaining individuals based on learning problems, inside the root project directory `chemMAP`, execute `python -m chemMAP.predict_remaining <path/to/learning-problems.ttl>`.
-Without a learning problem file, this function will use the grading data, provided in `chemMAP/data`.
+To predict the remaining individuals based on learning problems, inside the root project directory `chemMAP`, execute `python3 -m chemMAP.predict_remaining[ <path/to/learning-problems.ttl>]`. The squared bracket part is optional. Without a learning problem file, this function will use the grading data, provided in `chemMAP/data`. You might need to exchange `python3` for your python installation.
 
 The result is stored as `predictions.ttl` in the package root directory.

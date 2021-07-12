@@ -118,7 +118,7 @@ def main():
     log("Save results to file...")
     file_name = "predictions.ttl"
     results.save_results_to_file(file_name)
-    log(f"Finished saving results at <python_root_dir>/{file_name}")
+    log(f"Finished saving results at <chemMAP_root_dir>/{file_name}")
 
 
 # Run main() if this script is started as __main__ (for example from console).
