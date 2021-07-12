@@ -1,8 +1,3 @@
-import rdflib
-import numpy as np
-import pandas as pd
-
-import pickle
 from sklearn.preprocessing import OneHotEncoder
 from chemMAP.transformers.utils import get_structs
 from chemMAP.transformers.utils import get_dict_sub_struct_to_struct
@@ -12,15 +7,29 @@ from chemMAP.transformers.utils import get_type_map
 
 
 class StructFeatures:
+    """Generates binary features for individuals of class Structure.
+    The generated features are binary feature, one for each immediate sub-class or sub-sub-class of class Structure in
+    the Carcinogenesis ontology.
+    A feature is 1 if the individual is of this class and 0 otherwise.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
+
         self.ontology = ontology
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
     def transform(self, X):
+        """Generates binary features for individuals of class Structure.
+        The generated features are binary feature, one for each immediate sub-class or sub-sub-class of class Structure in
+        the Carcinogenesis ontology.
+        A feature is 1 if the individual is of this class and 0 otherwise.
+
+        Returns the features as sparse matrix.
+        """
         type_map = get_type_map(self.ontology)
         struct_uris, struct_labels = get_structs(self.ontology)
         substruct_uris, substruct_labels = get_sub_structs(self.ontology)
@@ -50,6 +59,6 @@ class StructFeatures:
         
         return encoder.transform(features)
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)

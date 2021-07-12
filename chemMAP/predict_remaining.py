@@ -41,6 +41,7 @@ def validity_check(estimator, ontology, X, y):
     f1_m = f1_score(y_val, y_val_pred, average='macro')
     print(f"f1_score: {f1}, precision: {prec}, recall: {rec}, f1_macro: {f1_m}")
 
+
 def main():
     # Do we want some outputs?
     verbose = True
@@ -49,6 +50,7 @@ def main():
     else:
         log = lambda x: False
 
+    # Default to the following path or use the given argument at position 1 as path for the LP.
     lp_path = "data/kg-mini-project-grading.ttl"
     import sys
     import os
@@ -66,7 +68,7 @@ def main():
     log("loading learning problems...")
     learning_problems = get_learning_problems(source="data/kg-mini-project-grading.ttl")
 
-    # Choose an Estimator
+    # Choose an Estimator (Note: Only choose the class name!).
     estimator = DecisionTreeAll
 
     # A class to handle all results and save it to file later.
@@ -83,7 +85,8 @@ def main():
         # Get the train and test set.
         X_train, y_train = lp["examples"], lp["labels"]
         X_all = get_individuals(ontology)  # Get all individuals in the ontology
-        X_test = X_all.difference(X_train)  # The difference of X_test to X_all is our test set for which we want to predict
+        # The difference of X_test to X_all is our test set for which we want to predict
+        X_test = X_all.difference(X_train)
         X_test = list(X_test)  # We need a list to enable X_test for pandas library
         log(f"We have a training set of {len(X_train)} individuals and a test set of {len(X_test)} individuals.")
 
@@ -115,5 +118,7 @@ def main():
     results.save_results_to_file(file_name)
     log(f"Finished saving results at <python_root_dir>/{file_name}")
 
+
+# Run main() if this script is started as __main__ (for example from console).
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 import pandas as pd
 from rdflib import Graph, Literal, Namespace
-from chemMAP.LearningProblemParser import LearningProblemParser
 
 class PredictionAggregator:
     '''

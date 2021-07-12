@@ -1,8 +1,3 @@
-import rdflib
-import numpy as np
-import pandas as pd
-
-import pickle
 from sklearn.preprocessing import OneHotEncoder
 from chemMAP.transformers.utils import get_atoms
 from chemMAP.transformers.utils import get_dict_sub_atom_to_atom
@@ -12,15 +7,30 @@ from chemMAP.transformers.utils import get_type_map
 
 
 class AtomFeatures:
+    """Generates binary features for individuals of class Atom.
+    The generated features are binary feature, one for each immediate sub-class or sub-sub-class of class Atom in the
+    Carcinogenesis ontology.
+    A feature is 1 if the individual is of this class and 0 otherwise.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
+
         self.ontology = ontology
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
     def transform(self, X):
+        """Generates binary features for individuals of class Atom.
+        The generated features are binary feature, one for each immediate sub-class or sub-sub-class of class Atom in the
+        Carcinogenesis ontology.
+        A feature is 1 if the individual is of this class and 0 otherwise.
+
+        Returns the features as sparse matrix.
+        """
+
         type_map = get_type_map(self.ontology)
         atom_uris, atom_labels = get_atoms(self.ontology)
         subatom_uris, subatom_labels = get_sub_atoms(self.ontology)
@@ -43,6 +53,6 @@ class AtomFeatures:
         
         return encoder.transform(features)
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)

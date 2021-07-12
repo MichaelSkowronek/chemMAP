@@ -1,103 +1,29 @@
-from chemMAP.CarcinogenesisOWLparser import load_ontology
-import numpy as np
 from rdflib import Graph
-import pandas as pd
-
-# Takes the number of the learning problem lpNum in data/kg-mini-project-train.ttl and provides the ontology as RDFLib
-# graph in LearningProblemParser.lp.
-# Also provides functions to handle LearningProblemParser.lp.
-class LearningProblemParser:
-
-    def __init__(self,lpNum,source='data/kg-mini-project-train.ttl', rdf_format='turtle'):
-
-        G = Graph()
-        G.parse(source, format=rdf_format)
-
-        myQuery = '''
-        PREFIX lpres: <https://lpbenchgen.org/resource/>
-        PREFIX lpprop: <https://lpbenchgen.org/property/>
-        CONSTRUCT { lpres:lp_%d ?p ?o }
-        WHERE
-        {
-            {
-                BIND (lpprop:excludesResource AS ?p) .
-                lpres:lp_%d lpprop:excludesResource ?o .
-            }
-            UNION
-            {
-                BIND (lpprop:includesResource AS ?p) .
-                lpres:lp_%d lpprop:includesResource ?o .            
-            }
-        }
-        ''' % (lpNum, lpNum, lpNum)
-        res = G.query(myQuery)
-
-        self.lp = self._triplesToGraph(res)
-
-    # Get subgraph of lp with objects of properts "excludesResource" in Turtle format.
-    def getExcludesResource(self):
-
-        myQuery = '''
-                PREFIX lpres: <https://lpbenchgen.org/resource/>
-                PREFIX lpprop: <https://lpbenchgen.org/property/>
-                CONSTRUCT { ?s lpprop:excludesResource ?o }
-                WHERE
-                {
-                    ?s lpprop:excludesResource ?o .
-                }
-                '''
-        return self._triplesToGraph(self.lp.query(myQuery))
-
-    # Get subgraph of lp with objects of properts "includesResource" in Turtle format.
-    def getIncludesResource(self):
-
-        myQuery = '''
-                    PREFIX lpres: <https://lpbenchgen.org/resource/>
-                    PREFIX lpprop: <https://lpbenchgen.org/property/>
-                    CONSTRUCT { ?s lpprop:includesResource ?o }
-                    WHERE
-                    {
-                        ?s lpprop:includesResource ?o .
-                    }
-                    '''
-        return self._triplesToGraph(self.lp.query(myQuery))
-
-
-    # Get X,y arrays where x_i is the ith IRI and y_i is the ith label of the chosen Learning Problem.
-    # Label 0 corresponds to ExcludesResource and 1 to IncludesResource
-    # X and y are pandas.Series objects
-    # Note: x_i is of type "<class 'rdflib.term.URIRef'>"
-    # Nore: The array is sorted by label.
-    def getIRIclassification(self):
-        X_ex = pd.Series(data=[triple[2] for triple in self.getExcludesResource()], name='IRIs')
-        y_ex = pd.Series(np.zeros(len(X_ex),dtype=int))
-        X_in = pd.Series(data=[triple[2] for triple in self.getIncludesResource()], name='IRIs')
-        y_in = pd.Series(np.zeros(len(X_in),dtype=int)+1)
-        X = X_ex.append(X_in,ignore_index=True)
-        y = y_ex.append(y_in,ignore_index=True)
-        return X, y
-
-    #--------------------------------------------------------------------------------------------------------------------#
-# Helper Functions
-
-    # Converts a queryResult from rdflib.graph.Graph.query() which consists of triples to a Graph() object
-    def _triplesToGraph(self,ResultTripples):
-        G = Graph()
-        for row in ResultTripples:
-            G.add(row)
-        return G
-
-
 import os
 import pickle
 
-def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
 
+def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
+    """Loads the Learning Problem (LP) ontology and returns it with the following structure:
+    A list of hashmaps with three elements ('name', 'examples', 'labels').
+
+    The 'name' gives the LP's name which was specified in the LP ontology. The 'examples' gives another list of URIs
+    (class URIRef) which are the classified individuals in the  LP ontology. The 'labels' gives the corresponding
+    labels for the examples (0 for excluded, 1 for included).
+
+    The default source can be altered.
+
+    Optimized for successive loads on the same file."""
+
+    # Have we loaded this file previously and stored it in a pickle file already? Then just load the pickle file.
     pickled_file = source.split(".")[0]+".pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
 
+    # Else parse the file.
     problems_graph = Graph().parse(str(source), format="ttl")
+
+    # Get all the LPs
     lps = problems_graph.query("""
     SELECT DISTINCT ?a
     WHERE 
@@ -106,11 +32,14 @@ def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
     }
     """)
 
+    # For each LP get the included and excluded resources.
     lp_list = []
     for lp_result in lps:
         lp = lp_result[0]
         examples = []
         labels = []
+
+        # Get the included resources and use label 1 for them.
         pos_examples_query = problems_graph.query("""
         SELECT DISTINCT ?a
         WHERE
@@ -121,6 +50,7 @@ def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
         examples.extend(pos_examples)
         labels.extend(len(pos_examples) * [True])
 
+        # Equivalently for excluded and label 0.
         neg_examples_query = problems_graph.query("""
         SELECT DISTINCT ?a
         WHERE
@@ -132,5 +62,6 @@ def get_learning_problems(source="data/kg-mini-project-train_v2.ttl"):
         labels.extend(len(neg_examples) * [False])
         lp_list.append(dict(name=lp, examples=examples, labels=labels))
 
+    # Store the data structure in a pickle file to avoid successive parsing.
     pickle.dump(lp_list, open(pickled_file, "wb"))
     return lp_list

@@ -1,7 +1,9 @@
-"""Evaluate all implemented estimators and print results."""
+"""
+Evaluate all implemented estimators and print results.
+For development and testing.
+"""
 
 import os
-import chemMAP.estimators as estimators
 from chemMAP.carcino_CV_score import carcino_CV_score
 from chemMAP.CarcinogenesisOWLparser import load_ontology
 from chemMAP.LearningProblemParser import get_learning_problems
@@ -16,7 +18,7 @@ from chemMAP.estimators.DecisionTreeAll import DecisionTreeAll
 
 verbose = True
 result_folder = Path("results")
-estimator_list = [DecisionTreeAll]  # or estimators.__all__
+estimator_list = [DecisionTreeAll]
 data_filter = None  # filter_compounds, filter_bonds, filter_structs, filter_atoms, None for all data
 
 if __name__ == "__main__":

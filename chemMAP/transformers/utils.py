@@ -6,7 +6,8 @@ from rdflib.plugins.sparql import prepareQuery
 
 
 def uri2str(uri):
- return uri.n3().split('#')[1].split('>')[0]
+    """Given a URI of class URIRef from the RDFLib Library, this returns the name between '#' and '>' at the end."""
+    return uri.n3().split('#')[1].split('>')[0]
 
 
 def get_rdf_type(ontology, item_uri):
@@ -64,7 +65,8 @@ def get_type_map(ontology):
 
 
 def get_rdf_types(ontology, item_uris):
-    """Return types, 'a' property for given uris. It is assumed the type is unique per instance. Optimized for large uri lists"""
+    """Return types, 'a' property for given uris. It is assumed the type is unique per instance. Optimized for large
+    uri lists"""
     # Get a map which maps individuals from the ontology to their types.
     type_map = get_type_map(ontology)
 
@@ -87,9 +89,10 @@ def get_all_of_type(ontology, type_uri):
     return list(results)
 
 
-# Filter X, y  by compounds.
-# X: IRIs as pandas.DataFrame of str, y: label of the corresponding IRI as pandas.DataFrame.
 def filter_compounds(ontology, X, y):
+    """Filter X, y  by Compounds.
+    X, y are lists.
+    returns a list."""
     classes = get_compound_set(ontology)
     X = pd.DataFrame(X)
     y = pd.DataFrame(y)
@@ -98,6 +101,9 @@ def filter_compounds(ontology, X, y):
 
 
 def filter_atoms(ontology, X, y):
+    """Filter X, y  by Atoms.
+    X, y are lists.
+    returns a list."""
     classes = set(get_sub_atoms(ontology)[0])
     X_types = get_rdf_types(ontology, X)
     mask = [(x in classes) for x in X_types]
@@ -107,6 +113,9 @@ def filter_atoms(ontology, X, y):
 
 
 def filter_bonds(ontology, X, y):
+    """Filter X, y  by Bonds.
+    X, y are lists.
+    returns a list."""
     classes = set(get_bonds(ontology)[0])
     X_types = get_rdf_types(ontology, X)
     mask = [(x in classes) for x in X_types]
@@ -116,6 +125,9 @@ def filter_bonds(ontology, X, y):
 
 
 def filter_structs(ontology, X, y):
+    """Filter X, y  by Structures.
+    X, y are lists.
+    returns a list."""
     structs = set(get_structs(ontology)[0])
     substructs = set(get_sub_structs(ontology)[0])
     classes = structs.union(substructs)
@@ -126,9 +138,9 @@ def filter_structs(ontology, X, y):
     return X[mask].tolist(), y[mask].tolist()
 
 
-# Returns a Frozenset of all compounds.
-# Type of a set entry is str and it's the compound name after '#'
 def get_compound_set(ontology):
+    """Returns a Frozenset of all compounds.
+    Type of a set entry is str and it's the compound name between '#' and '>'."""
     pickled_file = "chemMAP/transformers/pcl_files/CompoundsSet.pcl"
 
     if os.path.exists(pickled_file):
@@ -146,10 +158,10 @@ def get_compound_set(ontology):
     return all_comp_set
 
 
-# Gets all the Atoms in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: atoms: list of URIRef, atom_labels: list of strings
 def get_atoms(ontology):
+    """Gets all the Atoms in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: atoms: list of URIRef, atom_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/Atoms.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -173,10 +185,10 @@ def get_atoms(ontology):
     return atoms, atom_labels
 
 
-# Gets all the Subclasses of Atoms in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: sub_atoms: list of URIRef, sub_atom_labels: list of strings
 def get_sub_atoms(ontology):
+    """Gets all the Subclasses of Atoms in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: sub_atoms: list of URIRef, sub_atom_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/SubAtoms.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -201,10 +213,10 @@ def get_sub_atoms(ontology):
     return sub_atoms, sub_atom_labels
 
 
-# Gets all the Subclasses of Bond in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: bonds: list of URIRef, bond_labels: list of strings
 def get_bonds(ontology):
+    """Gets all the Subclasses of Bond in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: bonds: list of URIRef, bond_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/Bonds.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -228,10 +240,10 @@ def get_bonds(ontology):
     return bonds, bond_labels
 
 
-# Calculates a hashtable(dict) which maps sub-atoms to atoms.
-# The hashtable keys are the str name of the sub-atom.
-# The hashtable values are the str name of the corresponding atom.
 def get_dict_sub_atom_to_atom(ontology):
+    """Calculates a hashtable(dict) which maps sub-atoms to atoms.
+    The hashtable keys are the str name of the sub-atom.
+    The hashtable values are the str name of the corresponding atom."""
     pickled_file = "chemMAP/transformers/pcl_files/DictSaToA.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -255,10 +267,10 @@ def get_dict_sub_atom_to_atom(ontology):
     return dict_sa_to_a
 
 
-# Gets all the Structures in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: structs: list of URIRef, struct_labels: list of strings
 def get_structs(ontology):
+    """Gets all the Structures in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: structs: list of URIRef, struct_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/Structs.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -282,10 +294,10 @@ def get_structs(ontology):
     return structs, struct_labels
 
 
-# Gets all the Sub-Structures of Structures in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: sub_structs: list of URIRef, sub_struct_labels: list of strings
 def get_sub_structs(ontology):
+    """Gets all the Sub-Structures of Structures in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: sub_structs: list of URIRef, sub_struct_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/SubStructs.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -310,10 +322,10 @@ def get_sub_structs(ontology):
     return sub_structs, sub_struct_labels
 
 
-# Calculates a hashtable(dict) which maps sub-structs to structs.
-# The hashtable keys are the str name of the sub-struct.
-# The hashtable values are the str name of the corresponding struct.
 def get_dict_sub_struct_to_struct(ontology):
+    """Calculates a hashtable(dict) which maps sub-structs to structs.
+    The hashtable keys are the str name of the sub-struct.
+    The hashtable values are the str name of the corresponding struct."""
     pickled_file = "chemMAP/transformers/pcl_files/DictSsToS.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -337,10 +349,10 @@ def get_dict_sub_struct_to_struct(ontology):
     return dict_ss_to_s
 
 
-# Gets all the DataProperties in the Carcinogenesis Ontology.
-# ontology: Graph
-# return: bonds: list of URIRef, bond_labels: list of strings
 def get_data_properties(ontology):
+    """Gets all the DataProperties in the Carcinogenesis Ontology.
+    ontology: Graph
+    return: bonds: list of URIRef, bond_labels: list of strings"""
     pickled_file = "chemMAP/transformers/pcl_files/DataProperties.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -363,12 +375,13 @@ def get_data_properties(ontology):
     pickle.dump((props, prop_labels), open(pickled_file, "wb"))
     return props, prop_labels
 
-# Calculates a hashmap which maps for each DataProperty, indexed by the name after '#' in the IRI, to another hashmap
-# which represents the triples (individual, DataProperty, bool) from the ontology. The individual is the key and is
-# given as str which is the name of the individual, i.e. the str after '#' in the IRI.
-# with_charge=False says that we do not want a hashmap for the charge. This is because charge has not Compound but
-# Atom as domain.
+
 def get_data_props_indi_maps(ontology, with_charge=False):
+    """Calculates a hashmap which maps for each DataProperty, indexed by the name after '#' in the IRI, to another
+    hashmap which represents the triples (individual, DataProperty, bool) from the ontology. The individual is the key
+    and is given as str which is the name of the individual, i.e. the str after '#' in the IRI.
+    with_charge=False says that we do not want a hashmap for the charge. This is because charge has not Compound but
+    Atom as domain."""
     pickled_file = "chemMAP/transformers/pcl_files/DataProbIndiMaps.pcl"
     if os.path.exists(pickled_file):
         return pickle.load(open(pickled_file, "rb"))
@@ -378,8 +391,6 @@ def get_data_props_indi_maps(ontology, with_charge=False):
         props.remove(rdflib.term.URIRef('http://dl-learner.org/carcinogenesis#charge'))
         prop_labels.remove('charge')
     else:
-        # TODO Implement the hashmap for charge propertly, i.e. first infer if each atom has equal charge such that
-        # TODO we only need to add entries for the atom classes.
         print('WARNING: DataProperty Charge has no implementation yet.')
 
     data_prop_maps = {}

@@ -1,8 +1,6 @@
 import rdflib
 import numpy as np
-import pandas as pd
 
-import pickle
 from sklearn.preprocessing import OneHotEncoder
 from rdflib.plugins.sparql import prepareQuery
 from chemMAP.transformers.utils import get_atoms
@@ -11,9 +9,18 @@ from chemMAP.transformers.utils import get_sub_atoms
 from chemMAP.transformers.utils import get_bonds
 from chemMAP.transformers.utils import uri2str
 from chemMAP.transformers.utils import get_type_map
+
+
 class BondFeatures:
+    """Generates binary features for individuals of class Bond.
+    A Bond consists of two individuals of class Atom.
+    The generated features are the same features as in AtomFeatures, but for each of the two Atoms of the Bond.
+    See chemMap/transformers/AtomFeatures.py for more information on the Atom-features.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
+
         self.ontology = ontology
         self.feature_extract_query = prepareQuery('''
                 PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
@@ -23,11 +30,19 @@ class BondFeatures:
                 }
                 ''')
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
     def transform(self, X):
+        """Generates binary features for individuals of class Bond.
+        A Bond consists of two individuals of class Atom.
+        The generated features are the same features as in AtomFeatures, but for each of the two Atoms of the Bond.
+        See chemMap/transformers/AtomFeatures.py for more information on the Atom-features.
+
+        Returns the features as sparse matrix.
+        """
+
         bond_uris, bond_labels = get_bonds(self.ontology)
         bond_labels = np.array(bond_labels)
         type_map = get_type_map(self.ontology)
@@ -77,6 +92,6 @@ class BondFeatures:
         
         return encoder.transform(features)
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)

@@ -14,10 +14,15 @@ from chemMAP.transformers.utils import get_data_properties
 from chemMAP.transformers.utils import get_data_props_indi_maps
 
 
-# Transforms X into 93 features, one for each atom and sub-atom. The number of atoms and sub-atoms is counted.
 class AllAtomFeatures:
+    """Generates 93 counting features for individuals of class Compound.
+    The generated features are counting features, one for each immediate sub-class or sub-sub-class of class Atom in
+    the Carcinogenesis ontology.
+    A feature is a number b in the natural numbers if the Compound has b times the Atom of this class.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
         self.ontology = ontology
         self.all_atom_query = prepareQuery('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
@@ -28,14 +33,21 @@ class AllAtomFeatures:
             }
             ''')
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
-    # Transforms X into 93 features, one for each atom and sub-atom. The number of atoms and sub-atoms is counted.
-    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
-    # returns a pd.DataFrame
     def transform(self, X):
+        """Generates 93 counting features for individuals of class Compound.
+        The generated features are counting features, one for each immediate sub-class or sub-sub-class of class Atom in
+        the Carcinogenesis ontology.
+        A feature is a number b in the natural numbers if the Compound has b times the Atom of this class.
+
+        X: list or np.array or pd.DataFrame of strings which describe compound URIs.
+
+        Returns a matrix as pandas.DataFrame class.
+        """
+
         X = pd.DataFrame(X)
 
         # First get all the atoms there are and the corresponding labels.
@@ -65,15 +77,20 @@ class AllAtomFeatures:
                 featureMatrix.loc[i, atom_label] += 1
         return featureMatrix
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)
 
 
-# Transforms X into 4 features, one for each bond. The number of bonds is counted.
 class BondFeatures:
+    """Generates 4 counting features for individuals of class Compound.
+    The generated features are counting features, one for each immediate sub-class class Bond in
+    the Carcinogenesis ontology.
+    A feature is a number b in the natural numbers if the Compound has b times the Bond of this class.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
         self.ontology = ontology
         self.bond_query = prepareQuery('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
@@ -84,14 +101,21 @@ class BondFeatures:
             }
             ''')
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
-    # Transforms X into 4 features, one for each bond. The number of bonds is counted.
-    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
-    # returns a pd.DataFrame
     def transform(self, X):
+        """Generates 4 counting features for individuals of class Compound.
+        The generated features are counting features, one for each immediate sub-class class Bond in
+        the Carcinogenesis ontology.
+        A feature is a number b in the natural numbers if the Compound has b times the Bond of this class.
+
+        X: list or np.array or pd.DataFrame of strings which describe compound URIs.
+
+        Returns a matrix as pandas.DataFrame class.
+        """
+
         X = pd.DataFrame(X)
 
         # First get all the bonds there are and the corresponding labels.
@@ -109,16 +133,20 @@ class BondFeatures:
                 feature_matrix.loc[i, bond_column] += 1
         return feature_matrix
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)
 
 
-# Transforms X into 41 features, one for each struct and sub-struct. The number of structs and sub-structs is
-# counted.
 class AllStructFeatures:
+    """Generates 41 counting features for individuals of class Compound.
+    The generated features are counting features, one for each immediate sub-class or sub-sub-class of class Structure
+    in the Carcinogenesis ontology.
+    A feature is a number b in the natural numbers if the Compound has b times the Structure of this class.
+    """
 
     def __init__(self, ontology):
+        """Initialize the transformer with the Carcinogenesis ontology."""
         self.ontology = ontology
         self.all_struct_query = prepareQuery('''
             PREFIX carcinogenesis: <http://dl-learner.org/carcinogenesis#>
@@ -129,15 +157,20 @@ class AllStructFeatures:
             }
             ''')
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
-    # Transforms X into 41 features, one for each struct and sub-struct. The number of structs and sub-structs is
-    # counted.
-    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
-    # returns a pd.DataFrame
     def transform(self, X):
+        """Generates 41 counting features for individuals of class Compound.
+        The generated features are counting features, one for each immediate sub-class or sub-sub-class of class Structure
+        in the Carcinogenesis ontology.
+        A feature is a number b in the natural numbers if the Compound has b times the Structure of this class.
+
+        X: list or np.array or pd.DataFrame of strings which describe compound URIs.
+
+        Returns a matrix as pandas.DataFrame class.
+        """
         X = pd.DataFrame(X)
 
         # First get all the structs there are and the corresponding labels.
@@ -169,28 +202,41 @@ class AllStructFeatures:
                     featureMatrix.loc[i, super_struct_label] += 1
         return featureMatrix
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)
 
 
-# Transforms X into 14 features, one for each DataProperty with 'charge' beeing optional. A feature is 1 if x_i in
-# X is true for the corresponding property, -1 if false, 0 if no data is given.
 class AllDataPropertyFeatures:
+    """Generates 14 features for individuals of class Compound.
+    The generated features are either binary or 3-class (-1,0,1), and there is one for each DataProperty in the
+    Carcinogenesis ontology.
+    A feature is 1 if the DataProperty is true and -1 if it is false and 0 if it is not provided. The 0 case might
+    never happen, so we might have a binary feature.
+    The "charge" DataProperty is excluded.
+    """
 
     def __init__(self, ontology, with_charge=False):
+        """Initialize the transformer with the Carcinogenesis ontology."""
         self.ontology = ontology
         self.with_charge = with_charge
 
-    # No fit needed.
     def fit(self):
+        """No fit needed."""
         return self
 
-    # Transforms X into 14 features, one for each DataProperty with 'charge' beeing optional. A feature is 1 if x_i in
-    # X is true for the corresponding property, -1 if false, 0 if no data is given.
-    # X: list/np.array/pd.DataFrame of str which describe compound IRIs
-    # returns a pd.DataFrame
     def transform(self, X):
+        """Generates 14 features for individuals of class Compound.
+        The generated features are either binary or 3-class (-1,0,1), and there is one for each DataProperty in the
+        Carcinogenesis ontology.
+        A feature is 1 if the DataProperty is true and -1 if it is false and 0 if it is not provided. The 0 case might
+        never happen, so we might have a binary feature.
+        The "charge" DataProperty is excluded.
+
+        X: list or np.array or pd.DataFrame of strings which describe compound URIs.
+
+        Returns a matrix as pandas.DataFrame class.
+        """
         X = pd.DataFrame(X)
 
         props, prop_labels = get_data_properties(self.ontology)
@@ -217,6 +263,6 @@ class AllDataPropertyFeatures:
                             featureMatrix.loc[i, prop] = -1
         return featureMatrix
 
-    # Without fit this is trivial.
     def fit_transform(self, X):
+        """Without fit, this just calls self.transform(X)."""
         return self.transform(X)
