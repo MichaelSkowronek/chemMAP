@@ -43,6 +43,8 @@ def validity_check(estimator, ontology, X, y):
 
 
 def main():
+    """Example script for using the chemMAP library."""
+
     # Do we want some outputs?
     verbose = True
     if verbose:
@@ -75,7 +77,7 @@ def main():
     results = PredictionAggregator()
 
     # Do we want to check the validity of our algorithm on the training data?
-    check_validity = True
+    check_validity = False
 
     # iterate over the LPs and predict for each separately
     for i, lp in enumerate(learning_problems):
